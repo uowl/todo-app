@@ -138,3 +138,6 @@
 
 ## Improvement round 37
 - Multi-level undo: `restore` steps back through up to 20 rm/clear batches (`trash_history` in the JSON; legacy `trash` still loads). `ls` now groups/indents subtasks under a listed parent. 115 tests pass. Backlog now empty.
+
+## Improvement round 38
+- Requested features (subtasks, multi-level undo) verified implemented (rounds 35-37); ticked in REQUESTED_FEATURES.md. 115 tests pass.
