@@ -21,7 +21,6 @@
 - The `OVERDUE` marker uses the local date.
 
 ## Backlog
-- Natural-language due dates ("tomorrow", "fri").
 - Coloured output (ANSI), with a `--no-color` option or support for `NO_COLOR`.
 - Subtasks / notes; recurring tasks.
 - `todo export` / `import` (CSV / Markdown).
@@ -34,3 +33,6 @@
 - **Bug fixed:** multi-ID `done`/`undo`/`rm` applied partially when a later ID was missing or duplicated. IDs are now de-duplicated and validated first (all-or-nothing).
 - Added 6 CLI tests for this and other edge cases. All tests pass.
 - Minor: error text for wrongly-shaped JSON files is technical (e.g. "'list' object has no attribute 'get'") but the exit code is 1 and nothing crashes.
+
+## Improvement round 1
+- Added relative due dates (today/tomorrow/+Nd/+Nw/weekday), `ls --overdue`, and a clearer corrupt-file error. Tests updated/added; all pass.

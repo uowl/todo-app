@@ -65,3 +65,7 @@ The CLI looks for the data file in this order:
 ```sh
 python -m unittest discover -s tests -t . -v
 ```
+
+## Due dates and filters
+
+`--due` accepts `YYYY-MM-DD`, `today`, `tomorrow`, `+3d`, `+2w`, or a weekday name (`fri`, `monday`; next occurrence). `todo ls --overdue` shows only overdue tasks.

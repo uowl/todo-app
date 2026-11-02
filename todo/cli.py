@@ -31,7 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
     a = sub.add_parser("add", help="add a task")
     a.add_argument("title", nargs="+", help="task title")
     a.add_argument("-p", "--priority", default="medium", choices=PRIORITIES)
-    a.add_argument("-d", "--due", help="due date YYYY-MM-DD")
+    a.add_argument("-d", "--due", help="due: YYYY-MM-DD, today, tomorrow, +3d, +2w, weekday")
     a.add_argument("-t", "--tag", action="append", dest="tags", help="tag (repeatable)")
 
     ls = sub.add_parser("list", aliases=["ls"], help="list tasks (pending by default)")
@@ -40,6 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="show all tasks")
     g.add_argument("--done", action="store_const", dest="status", const="done",
                    help="show completed tasks only")
+    ls.add_argument("--overdue", action="store_true", help="only overdue tasks")
     ls.add_argument("-t", "--tag", help="filter by tag")
     ls.add_argument("-p", "--priority", choices=PRIORITIES, help="filter by priority")
     ls.set_defaults(status="pending")
@@ -57,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("--title")
     e.add_argument("-p", "--priority", choices=PRIORITIES)
     due = e.add_mutually_exclusive_group()
-    due.add_argument("-d", "--due", help="new due date YYYY-MM-DD")
+    due.add_argument("-d", "--due", help="new due date (same formats as add)")
     due.add_argument("--no-due", action="store_true", help="remove the due date")
     tags = e.add_mutually_exclusive_group()
     tags.add_argument("-t", "--tag", action="append", dest="tags", help="replace tags (repeatable)")
@@ -87,7 +88,8 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
         if cmd == "search":
             tasks = store.query(status="all", text=" ".join(args.text))
         else:
-            tasks = store.query(status=args.status, tag=args.tag, priority=args.priority)
+            tasks = store.query(status=args.status, tag=args.tag, priority=args.priority,
+                               overdue=args.overdue)
         if not tasks:
             print("No tasks.", file=out)
         for t in tasks:

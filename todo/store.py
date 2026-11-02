@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import tempfile
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 PRIORITIES = ("low", "medium", "high")
@@ -54,13 +55,38 @@ def validate_priority(value: str) -> str:
     return value
 
 
+WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+
+def parse_due(value: str, today: date | None = None) -> date:
+    """Parse YYYY-MM-DD, today/tomorrow, +Nd/+Nw, or a weekday name (next occurrence)."""
+    today = today or date.today()
+    v = value.strip().lower()
+    if v == "today":
+        return today
+    if v == "tomorrow":
+        return today + timedelta(days=1)
+    m = re.fullmatch(r"\+(\d+)([dw])", v)
+    if m:
+        return today + timedelta(days=int(m.group(1)) * (7 if m.group(2) == "w" else 1))
+    if v[:3] in WEEKDAYS and v in {w for d in WEEKDAYS for w in (d, _FULL[d])}:
+        ahead = (WEEKDAYS.index(v[:3]) - today.weekday()) % 7 or 7
+        return today + timedelta(days=ahead)
+    return date.fromisoformat(v)
+
+
+_FULL = {"mon": "monday", "tue": "tuesday", "wed": "wednesday", "thu": "thursday",
+         "fri": "friday", "sat": "saturday", "sun": "sunday"}
+
+
 def validate_due(value: str | None) -> str | None:
     if value is None or value == "":
         return None
     try:
-        return date.fromisoformat(value).isoformat()
+        return parse_due(value).isoformat()
     except ValueError:
-        raise TodoError(f"invalid due date {value!r}; use YYYY-MM-DD") from None
+        raise TodoError(f"invalid due date {value!r}; use YYYY-MM-DD, today, tomorrow, "
+                        "+3d, +2w or a weekday") from None
 
 
 def normalize_tags(tags: list[str] | None) -> list[str]:
@@ -97,8 +123,9 @@ class TodoStore:
             raw = json.loads(self.path.read_text(encoding="utf-8") or "{}")
             self.tasks = [Task.from_dict(t) for t in raw.get("tasks", [])]
             stored_next = int(raw.get("next_id", 1))
-        except (json.JSONDecodeError, TypeError, AttributeError, ValueError) as exc:
-            raise TodoError(f"could not read {self.path}: {exc}") from None
+        except (json.JSONDecodeError, TypeError, AttributeError, ValueError, KeyError):
+            raise TodoError(f"could not read {self.path}: file is corrupt or not a todo "
+                            "file (fix or delete it)") from None
         max_id = max((t.id for t in self.tasks), default=0)
         self.next_id = max(stored_next, max_id + 1)
 
@@ -180,7 +207,8 @@ class TodoStore:
         return removed
 
     def query(self, status: str = "pending", tag: str | None = None,
-              priority: str | None = None, text: str | None = None) -> list[Task]:
+              priority: str | None = None, text: str | None = None,
+              overdue: bool = False) -> list[Task]:
         """Filter tasks; sort pending first, then priority (high first), due date, id."""
         result = self.tasks
         if status == "pending":
@@ -193,6 +221,8 @@ class TodoStore:
         if priority:
             priority = validate_priority(priority)
             result = [t for t in result if t.priority == priority]
+        if overdue:
+            result = [t for t in result if t.is_overdue()]
         if text:
             needle = text.lower()
             result = [t for t in result if needle in t.title.lower()]

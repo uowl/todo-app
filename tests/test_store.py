@@ -39,7 +39,7 @@ class TestAdd(StoreTestCase):
         with self.assertRaises(TodoError):
             self.store.add("x", priority="urgent")
         with self.assertRaises(TodoError):
-            self.store.add("x", due="tomorrow")
+            self.store.add("x", due="someday")
         self.assertEqual(self.store.tasks, [])
 
     def test_ids_not_reused_after_delete(self):
@@ -159,3 +159,21 @@ class TestTask(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DueParsingTests(unittest.TestCase):
+    def test_formats(self):
+        from datetime import date
+        from todo.store import parse_due
+        wed = date(2026, 11, 4)
+        self.assertEqual(parse_due("today", wed), wed)
+        self.assertEqual(parse_due("Tomorrow", wed), date(2026, 11, 5))
+        self.assertEqual(parse_due("+2w", wed), date(2026, 11, 18))
+        self.assertEqual(parse_due("+3d", wed), date(2026, 11, 7))
+        self.assertEqual(parse_due("fri", wed), date(2026, 11, 6))
+        self.assertEqual(parse_due("wednesday", wed), date(2026, 11, 11))
+        self.assertEqual(parse_due("2027-01-02", wed), date(2027, 1, 2))
+        with self.assertRaises(ValueError):
+            parse_due("someday", wed)
+        with self.assertRaises(ValueError):
+            parse_due("monkey", wed)
