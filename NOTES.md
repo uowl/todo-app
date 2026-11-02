@@ -84,3 +84,6 @@
 
 ## Improvement round 18
 - Added `ls --json` for scripting (respects filters/sort/limit). Backlog: subtasks, multi-level undo.
+
+## Improvement round 19 (no changes)
+- Reviewed; 79 tests pass, input validation verified. Backlog: subtasks, multi-level undo.
