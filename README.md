@@ -97,6 +97,7 @@ python -m unittest discover -s tests -t . -v
 ## Web GUI
 
 `todo web [--port 8765] [--host 127.0.0.1] [--open]` serves a local single-page app on the same data file
+Shortcuts: `n` new task, `/` focus search. In the Done view, "Clear completed" removes finished tasks (undo toast restores them).
 (`--file`/`TODO_FILE` honoured). It follows Apple's design language: SF system font, translucent blurred
 header, segmented Pending/Done/All control, rounded inset-grouped list, priority-coloured circle checkboxes,
 sheet-style edit dialog, undo toast after delete, automatic light/dark mode. Supports add, edit, complete,
