@@ -85,6 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
     tags.add_argument("-t", "--tag", action="append", dest="tags", help="replace tags (repeatable)")
     tags.add_argument("--no-tags", action="store_true", help="remove all tags")
 
+    sub.add_parser("restore", help="undo the last rm/clear")
     sub.add_parser("clear", help="delete all completed tasks")
     ex = sub.add_parser("export", help="export all tasks to stdout")
     ex.add_argument("-f", "--format", choices=("json", "csv", "markdown"), default="json")
@@ -141,14 +142,19 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             t = store.set_done(i, cmd == "done")
             print(f"{verb} task {t.id}: {t.title}", file=out)
     elif cmd == "rm":
-        for i in _checked_ids(store, args.ids):
-            t = store.remove(i)
+        removed = [store.remove(i) for i in _checked_ids(store, args.ids)]
+        store.trash = removed  # restore brings back the whole batch
+        store.save()
+        for t in removed:
             print(f"Removed task {t.id}: {t.title}", file=out)
     elif cmd == "edit":
         tags = [] if args.no_tags else args.tags
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
                        tags=tags, clear_due=args.no_due)
         print(f"Updated: {format_task(t)}", file=out)
+    elif cmd == "restore":
+        for t in store.restore():
+            print(f"Restored task {t.id}: {t.title}", file=out)
     elif cmd == "export":
         export_tasks(store.query(status="all", sort="created"), args.format, out)
     elif cmd == "clear":

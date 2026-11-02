@@ -23,7 +23,7 @@
 ## Backlog
 - Subtasks / notes; recurring tasks.
 - `todo import`.
-- Undo history for the last destructive action (`rm`, `clear`).
+- Multi-level undo history (only the last rm/clear is restorable now).
 - CI workflow (GitHub Actions) running the tests on several Python versions.
 
 ## Test results (testing pass)
@@ -37,3 +37,6 @@
 
 ## Improvement round 2
 - Added `ls --sort`, ANSI colour (tty only, honours NO_COLOR), `export` (json/csv/markdown). 37 tests pass.
+
+## Improvement round 3
+- Added `todo restore`: undoes the last `rm`/`clear` batch (kept in a `trash` list in the JSON file; older files load fine). 39 tests pass.

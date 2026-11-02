@@ -113,17 +113,19 @@ class TodoStore:
         self.path = resolve_path(path)
         self.tasks: list[Task] = []
         self.next_id = 1
+        self.trash: list[Task] = []  # tasks removed by the last rm/clear
         self.load()
 
     # ---- persistence -------------------------------------------------
     def load(self) -> None:
         if not self.path.exists():
-            self.tasks, self.next_id = [], 1
+            self.tasks, self.next_id, self.trash = [], 1, []
             return
         try:
             raw = json.loads(self.path.read_text(encoding="utf-8") or "{}")
             self.tasks = [Task.from_dict(t) for t in raw.get("tasks", [])]
             stored_next = int(raw.get("next_id", 1))
+            self.trash = [Task.from_dict(t) for t in raw.get("trash", [])]
         except (json.JSONDecodeError, TypeError, AttributeError, ValueError, KeyError):
             raise TodoError(f"could not read {self.path}: file is corrupt or not a todo "
                             "file (fix or delete it)") from None
@@ -132,7 +134,8 @@ class TodoStore:
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        payload = {"version": 1, "next_id": self.next_id, "tasks": [asdict(t) for t in self.tasks]}
+        payload = {"version": 1, "next_id": self.next_id, "tasks": [asdict(t) for t in self.tasks],
+                   "trash": [asdict(t) for t in self.trash]}
         # Atomic write: temp file in the same dir, then replace.
         fd, tmp = tempfile.mkstemp(dir=self.path.parent, prefix=".todo-", suffix=".tmp")
         try:
@@ -196,11 +199,22 @@ class TodoStore:
     def remove(self, task_id: int) -> Task:
         task = self.get(task_id)
         self.tasks.remove(task)
+        self.trash = [task]
         self.save()
         return task
 
+    def restore(self) -> list[Task]:
+        """Bring back the tasks deleted by the most recent rm/clear."""
+        if not self.trash:
+            raise TodoError("nothing to restore")
+        restored, self.trash = self.trash, []
+        self.tasks = sorted(self.tasks + restored, key=lambda t: t.id)
+        self.save()
+        return restored
+
     def clear_done(self) -> int:
         before = len(self.tasks)
+        self.trash = [t for t in self.tasks if t.done]
         self.tasks = [t for t in self.tasks if not t.done]
         removed = before - len(self.tasks)
         if removed:

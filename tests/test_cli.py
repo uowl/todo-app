@@ -213,3 +213,36 @@ class CliTestCase(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RestoreTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile, os
+        self.d = tempfile.mkdtemp()
+        self.f = os.path.join(self.d, "t.json")
+
+    def run_cli(self, *a):
+        import io
+        from todo.cli import main
+        o, e = io.StringIO(), io.StringIO()
+        return main(["--file", self.f, *a], o, e), o.getvalue(), e.getvalue()
+
+    def test_restore_rm_batch(self):
+        for t in "abc":
+            self.run_cli("add", t)
+        self.run_cli("rm", "1", "3")
+        code, out, _ = self.run_cli("restore")
+        self.assertEqual(code, 0)
+        self.assertIn("Restored task 1", out)
+        self.assertIn("Restored task 3", out)
+        self.assertIn("3 total", self.run_cli("stats")[1])
+
+    def test_restore_clear_and_empty(self):
+        self.run_cli("add", "a")
+        self.run_cli("done", "1")
+        self.run_cli("clear")
+        self.assertEqual(self.run_cli("restore")[0], 0)
+        self.assertIn("1 done", self.run_cli("stats")[1])
+        code, _, err = self.run_cli("restore")
+        self.assertEqual(code, 1)
+        self.assertIn("nothing to restore", err)
