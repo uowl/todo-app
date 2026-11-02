@@ -24,3 +24,5 @@ todo.json
 .idea/
 .DS_Store
 Thumbs.db
+.todo-web.pid
+.todo-web.log*

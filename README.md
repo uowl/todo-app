@@ -103,3 +103,8 @@ sheet-style edit dialog, undo toast after delete, automatic light/dark mode. Sup
 delete/undo, search, subtasks, tags, due dates and repeats. It binds to localhost only, rejects foreign
 `Host` headers, and requires JSON content-type on writes. JSON API: `/api/tasks` (GET/POST),
 `/api/tasks/ID` (PATCH/DELETE), `/api/restore`, `/api/clear` (POST).
+
+### Managing the web service (Windows / PowerShell)
+
+- `./run.ps1 [-Port 8765] [-BindHost 127.0.0.1] [-File path] [-Open]` starts `todo web` in the background (PID in `.todo-web.pid`, logs in `.todo-web.log`).
+- `./stop.ps1` stops it.

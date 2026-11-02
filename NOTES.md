@@ -144,3 +144,6 @@
 
 ## Improvement round 39
 - Added `todo web` (stdlib `http.server` JSON API + `todo/index.html` Apple-style SPA, light/dark). Store is re-read per request so CLI and GUI stay in sync; no auth (localhost only, Host check). 119 tests pass. Backlog: GUI has no bulk clear button/keyboard shortcuts; no browser automation test of the front end (manually only the API was exercised).
+
+## Improvement round 40
+- Added `run.ps1`/`stop.ps1` to start/stop the web GUI in the background (PID file). Interpreted "run.p1" as run.ps1; the request "now" had no content and was ignored. Manually verified start/HTTP 200/stop. Backlog: GUI bulk clear/shortcuts, no browser automation test.
