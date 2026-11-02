@@ -75,3 +75,4 @@ python -m unittest discover -s tests -t . -v
 - `todo ls --sort priority|due|created` (default `priority`).
 - Output is coloured (overdue/high priority red, done dimmed) only when writing to a terminal; set `NO_COLOR=1` to disable.
 - `todo export [-f json|csv|markdown]` prints all tasks to stdout (redirect to a file).
+- `todo import FILE` (or `-` for stdin) adds tasks from a JSON export or data file under fresh IDs; invalid input imports nothing.

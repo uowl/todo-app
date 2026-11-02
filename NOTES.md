@@ -43,3 +43,6 @@
 
 ## Improvement round 4
 - `search` now also matches tags; `edit` with no fields errors instead of silently succeeding; `done`/`undo` on a task already in that state no longer rewrites the completion timestamp. 42 tests pass.
+
+## Improvement round 5
+- Added `todo import FILE|-` (JSON list from `export json`, or a todo data file). IDs are reassigned; validation is all-or-nothing. 48 tests pass. Removed from backlog: import.

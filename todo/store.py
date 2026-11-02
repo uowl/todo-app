@@ -214,6 +214,31 @@ class TodoStore:
         self.save()
         return restored
 
+    def import_tasks(self, items: list) -> list[Task]:
+        """Add tasks from export-style dicts under fresh IDs. All-or-nothing."""
+        new: list[Task] = []
+        next_id = self.next_id
+        for i, item in enumerate(items, 1):
+            if not isinstance(item, dict):
+                raise TodoError(f"import item {i} is not an object")
+            title = str(item.get("title", "")).strip()
+            if not title:
+                raise TodoError(f"import item {i} has no title")
+            done = bool(item.get("done", False))
+            created = item.get("created")
+            task = Task(id=next_id, title=title, done=done,
+                        priority=validate_priority(str(item.get("priority") or "medium")),
+                        due=validate_due(item.get("due")), tags=normalize_tags(item.get("tags")),
+                        created=created if isinstance(created, str) else _now(),
+                        completed=(item.get("completed") or _now()) if done else None)
+            next_id += 1
+            new.append(task)
+        if new:
+            self.tasks.extend(new)
+            self.next_id = next_id
+            self.save()
+        return new
+
     def clear_done(self) -> int:
         before = len(self.tasks)
         self.trash = [t for t in self.tasks if t.done]

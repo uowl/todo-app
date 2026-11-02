@@ -90,6 +90,9 @@ def build_parser() -> argparse.ArgumentParser:
     ex = sub.add_parser("export", help="export all tasks to stdout")
     ex.add_argument("-f", "--format", choices=("json", "csv", "markdown"), default="json")
 
+    im = sub.add_parser("import", help="import tasks from a JSON export (file or - for stdin)")
+    im.add_argument("source", metavar="FILE")
+
     sub.add_parser("stats", help="show task counts")
     return p
 
@@ -159,6 +162,20 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             print(f"Restored task {t.id}: {t.title}", file=out)
     elif cmd == "export":
         export_tasks(store.query(status="all", sort="created"), args.format, out)
+    elif cmd == "import":
+        try:
+            if args.source == "-":
+                data = json.load(sys.stdin)
+            else:
+                with open(args.source, encoding="utf-8") as fh:
+                    data = json.load(fh)
+        except (OSError, ValueError) as exc:
+            raise TodoError(f"could not read {args.source}: {exc}") from None
+        if isinstance(data, dict):  # also accept a todo data file
+            data = data.get("tasks", [])
+        if not isinstance(data, list):
+            raise TodoError("import file must contain a JSON list of tasks")
+        print(f"Imported {len(store.import_tasks(data))} task(s).", file=out)
     elif cmd == "clear":
         print(f"Removed {store.clear_done()} completed task(s).", file=out)
     elif cmd == "stats":

@@ -277,3 +277,31 @@ class RoundFourTests(unittest.TestCase):
         first = TodoStore(self.f).get(1).completed
         self.run_cli("done", "1")
         self.assertEqual(TodoStore(self.f).get(1).completed, first)
+
+
+class ImportTest(ExtrasTest):
+    def test_roundtrip(self):
+        self.run_cli("add", "one", "-t", "x", "-d", "2030-01-01")
+        self.run_cli("add", "two", "-p", "high")
+        self.run_cli("done", "2")
+        _, exported, _ = self.run_cli("export")
+        src = Path(self._tmp.name) / "e.json"
+        src.write_text(exported, encoding="utf-8")
+        code, out, _ = self.run_cli("import", str(src))
+        self.assertEqual((code, out.strip()), (0, "Imported 2 task(s)."))
+        _, out, _ = self.run_cli("ls", "-a")
+        self.assertEqual(len(out.splitlines()), 4)
+        self.assertIn("#x", out)
+
+    def test_bad_import_is_all_or_nothing(self):
+        src = Path(self._tmp.name) / "b.json"
+        src.write_text('[{"title": "ok"}, {"title": "bad", "priority": "urgent"}]')
+        code, _, err = self.run_cli("import", str(src))
+        self.assertEqual(code, 1)
+        self.assertIn("priority", err)
+        self.assertIn("No tasks", self.run_cli("ls")[1])
+
+    def test_missing_file(self):
+        code, _, err = self.run_cli("import", "nope.json")
+        self.assertEqual(code, 1)
+        self.assertIn("could not read", err)
