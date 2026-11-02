@@ -246,3 +246,34 @@ class RestoreTests(unittest.TestCase):
         code, _, err = self.run_cli("restore")
         self.assertEqual(code, 1)
         self.assertIn("nothing to restore", err)
+
+
+class RoundFourTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile, os
+        self.d = tempfile.mkdtemp()
+        self.f = os.path.join(self.d, "t.json")
+
+    def run_cli(self, *a):
+        import io
+        from todo.cli import main
+        o, e = io.StringIO(), io.StringIO()
+        return main(["--file", self.f, *a], o, e), o.getvalue(), e.getvalue()
+
+    def test_edit_nothing_errors(self):
+        self.run_cli("add", "x")
+        rc, _, err = self.run_cli("edit", "1")
+        self.assertEqual(rc, 1)
+        self.assertIn("nothing to edit", err)
+
+    def test_search_matches_tag(self):
+        self.run_cli("add", "buy milk", "-t", "home")
+        rc, out, _ = self.run_cli("search", "home")
+        self.assertIn("buy milk", out)
+
+    def test_done_twice_keeps_timestamp(self):
+        from todo.store import TodoStore
+        self.run_cli("add", "x"); self.run_cli("done", "1")
+        first = TodoStore(self.f).get(1).completed
+        self.run_cli("done", "1")
+        self.assertEqual(TodoStore(self.f).get(1).completed, first)

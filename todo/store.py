@@ -168,6 +168,8 @@ class TodoStore:
 
     def set_done(self, task_id: int, done: bool = True) -> Task:
         task = self.get(task_id)
+        if task.done == done:  # already in that state: keep the original completion time
+            return task
         task.done = done
         task.completed = _now() if done else None
         self.save()
@@ -245,7 +247,8 @@ class TodoStore:
             result = [t for t in result if t.is_overdue()]
         if text:
             needle = text.lower()
-            result = [t for t in result if needle in t.title.lower()]
+            result = [t for t in result
+                      if needle in t.title.lower() or needle.lstrip('#') in t.tags]
         rank = {"high": 0, "medium": 1, "low": 2}
         if sort == "due":
             return sorted(result, key=lambda t: (t.done, t.due or "9999-12-31", rank.get(t.priority, 1), t.id))

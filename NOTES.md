@@ -40,3 +40,6 @@
 
 ## Improvement round 3
 - Added `todo restore`: undoes the last `rm`/`clear` batch (kept in a `trash` list in the JSON file; older files load fine). 39 tests pass.
+
+## Improvement round 4
+- `search` now also matches tags; `edit` with no fields errors instead of silently succeeding; `done`/`undo` on a task already in that state no longer rewrites the completion timestamp. 42 tests pass.

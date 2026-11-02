@@ -31,7 +31,7 @@ todo list
 | `todo list` / `todo ls` / `todo` | List pending tasks. |
 | `todo list -a` / `--done` | List all tasks, or only completed tasks. |
 | `todo list -t TAG` / `-p PRIORITY` | Show only tasks with a given tag or priority. |
-| `todo search TEXT` | Search all task titles. Case doesn't matter. |
+| `todo search TEXT` | Search all task titles and tags. Case doesn't matter. |
 | `todo done ID...` / `todo undo ID...` | Mark tasks as completed, or as pending again. |
 | `todo edit ID [--title T] [-p P] [-d DATE \| --no-due] [-t TAG... \| --no-tags]` | Edit a task. Passing `-t` replaces all of its tags. |
 | `todo rm ID...` | Delete tasks. |

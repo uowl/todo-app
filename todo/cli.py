@@ -66,7 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
     ls.add_argument("--sort", choices=SORTS, default="priority", help="sort order")
     ls.set_defaults(status="pending")
 
-    s = sub.add_parser("search", help="search task titles (all tasks)")
+    s = sub.add_parser("search", help="search titles and tags (all tasks)")
     s.add_argument("text", nargs="+")
 
     for name, help_ in (("done", "mark task(s) complete"), ("undo", "mark task(s) pending"),
@@ -149,6 +149,8 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             print(f"Removed task {t.id}: {t.title}", file=out)
     elif cmd == "edit":
         tags = [] if args.no_tags else args.tags
+        if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due)):
+            raise TodoError("nothing to edit; pass --title, -p, -d/--no-due or -t/--no-tags")
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
                        tags=tags, clear_due=args.no_due)
         print(f"Updated: {format_task(t)}", file=out)
