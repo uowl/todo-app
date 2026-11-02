@@ -308,7 +308,8 @@ class TodoStore:
 
     def query(self, status: str = "pending", tag: str | None = None,
               priority: str | None = None, text: str | None = None,
-              overdue: bool = False, sort: str = "priority") -> list[Task]:
+              overdue: bool = False, sort: str = "priority",
+              due_by: str | None = None) -> list[Task]:
         """Filter and sort. Default: pending first, priority (high first), due date, id.
 
         sort="due" orders by due date (undated last); sort="created" by creation order.
@@ -328,6 +329,12 @@ class TodoStore:
             result = [t for t in result if t.priority == priority]
         if overdue:
             result = [t for t in result if t.is_overdue()]
+        if due_by:
+            try:
+                limit = parse_due(due_by).isoformat()
+            except ValueError as exc:
+                raise TodoError(str(exc)) from None
+            result = [t for t in result if t.due and t.due <= limit]
         if text:
             needle = text.lower()
             result = [t for t in result

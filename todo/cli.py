@@ -67,6 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--done", action="store_const", dest="status", const="done",
                    help="show completed tasks only")
     ls.add_argument("--overdue", action="store_true", help="only overdue tasks")
+    ls.add_argument("--due-by", metavar="DATE", help="only tasks due on or before DATE (same formats as add -d)")
     ls.add_argument("-t", "--tag", help="filter by tag")
     ls.add_argument("-p", "--priority", choices=PRIORITIES, help="filter by priority")
     ls.add_argument("--sort", choices=SORTS, default="priority", help="sort order")
@@ -148,7 +149,7 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             tasks = store.query(status="all", text=" ".join(args.text))
         else:
             tasks = store.query(status=args.status, tag=args.tag, priority=args.priority,
-                               overdue=args.overdue, sort=args.sort)
+                               overdue=args.overdue, sort=args.sort, due_by=args.due_by)
         if not tasks:
             print("No tasks.", file=out)
         for t in tasks:

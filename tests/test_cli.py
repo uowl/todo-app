@@ -202,6 +202,18 @@ class CliTestCase(unittest.TestCase):
         _, out, _ = self.run_cli("stats")
         self.assertIn("1 overdue", out)
 
+    def test_due_by_filter(self):
+        self.run_cli("add", "soon", "-d", "tomorrow")
+        self.run_cli("add", "later", "-d", "2999-01-01")
+        self.run_cli("add", "undated")
+        _, out, _ = self.run_cli("ls", "--due-by", "+3d")
+        self.assertIn("soon", out)
+        self.assertNotIn("later", out)
+        self.assertNotIn("undated", out)
+        code, _, err = self.run_cli("ls", "--due-by", "garbage")
+        self.assertEqual(code, 1)
+        self.assertIn("error", err)
+
     def test_module_entry_point(self):
         env = {**os.environ, "TODO_FILE": self.file}
         subprocess.run([sys.executable, "-m", "todo", "add", "via subprocess"], cwd=ROOT,

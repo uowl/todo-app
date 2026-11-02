@@ -55,3 +55,6 @@
 
 ## Improvement round 8
 - Added recurring tasks (`add/edit -r daily|weekly|monthly`); `done` spawns the next occurrence. Next due is computed from the old due date (or today if none), so finishing late still yields a past-due next task. 57 tests pass. Removed from backlog: recurring (subtasks still open).
+
+## Improvement round 9
+- Added `ls --due-by DATE` (accepts relative dates; bad date gives a clean error). Backlog still: subtasks, multi-level undo, CI.

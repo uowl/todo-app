@@ -69,7 +69,7 @@ python -m unittest discover -s tests -t . -v
 
 ## Due dates and filters
 
-`--due` accepts `YYYY-MM-DD`, `today`, `tomorrow`, `+3d`, `+2w`, or a weekday name (`fri`, `monday`; next occurrence). `todo ls --overdue` shows only overdue tasks.
+`--due` accepts `YYYY-MM-DD`, `today`, `tomorrow`, `+3d`, `+2w`, or a weekday name (`fri`, `monday`; next occurrence). `todo ls --overdue` shows only overdue tasks; `todo ls --due-by +1w` shows dated tasks due on or before that date.
 
 ## Notes
 
