@@ -322,7 +322,8 @@ class TodoStore:
     def query(self, status: str = "pending", tag: str | None = None,
               priority: str | None = None, text: str | None = None,
               overdue: bool = False, sort: str = "priority",
-              due_by: str | None = None, untagged: bool = False) -> list[Task]:
+              due_by: str | None = None, untagged: bool = False,
+              undated: bool = False) -> list[Task]:
         """Filter and sort. Default: pending first, priority (high first), due date, id.
 
         sort="due" orders by due date (undated last); sort="created" by creation order.
@@ -339,6 +340,8 @@ class TodoStore:
             result = [t for t in result if tag in t.tags]
         if untagged:
             result = [t for t in result if not t.tags]
+        if undated:
+            result = [t for t in result if not t.due]
         if priority:
             priority = validate_priority(priority)
             result = [t for t in result if t.priority == priority]

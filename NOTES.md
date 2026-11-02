@@ -75,3 +75,6 @@
 
 ## Improvement round 15
 - Added `ls --untagged`. Backlog: subtasks, multi-level undo.
+
+## Improvement round 16
+- Added `ls --undated`. Backlog: subtasks, multi-level undo.

@@ -386,6 +386,13 @@ class NextLimitTest(ExtrasTest):
         self.assertIn("plain", out)
         self.assertNotIn("tagged", out.replace("untagged", ""))
 
+    def test_undated(self):
+        self.run_cli("add", "nodate")
+        self.run_cli("add", "dated", "-d", "2030-01-01")
+        _, out, _ = self.run_cli("ls", "--undated")
+        self.assertIn("nodate", out)
+        self.assertNotIn("2030", out)
+
     def test_next_and_limit(self):
         self.assertIn("Nothing to do", self.run_cli("next")[1])
         self.run_cli("add", "low one", "-p", "low")
