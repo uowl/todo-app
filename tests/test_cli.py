@@ -388,3 +388,12 @@ class NextLimitTest(ExtrasTest):
         _, out, _ = self.run_cli("ls", "--limit", "2")
         self.assertEqual(len(out.splitlines()), 2)
         self.assertEqual(self.run_cli("ls", "--limit", "0")[0], 1)
+
+
+class AddTagTest(ExtrasTest):
+    def test_edit_add_tag_keeps_existing(self):
+        self.run_cli("add", "x", "-t", "a")
+        self.assertEqual(self.run_cli("edit", "1", "--add-tag", "#b", "--add-tag", "a")[0], 0)
+        out = self.run_cli("show", "1")[1]
+        self.assertIn("#a #b", out)
+        self.assertEqual(self.run_cli("edit", "9", "--add-tag", "z")[0], 1)

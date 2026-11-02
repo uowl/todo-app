@@ -93,6 +93,8 @@ def build_parser() -> argparse.ArgumentParser:
     tags = e.add_mutually_exclusive_group()
     tags.add_argument("-t", "--tag", action="append", dest="tags", help="replace tags (repeatable)")
     tags.add_argument("--no-tags", action="store_true", help="remove all tags")
+    tags.add_argument("--add-tag", action="append", dest="add_tags", metavar="TAG",
+                      help="add a tag, keeping existing ones (repeatable)")
 
     e.add_argument("-n", "--note", help="set the note (empty string clears it)")
     e.add_argument("-r", "--repeat", choices=REPEATS + ("none",), help="set recurrence (none clears)")
@@ -183,6 +185,8 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             print(f"Removed task {t.id}: {t.title}", file=out)
     elif cmd == "edit":
         tags = [] if args.no_tags else args.tags
+        if args.add_tags:
+            tags = [*store.get(args.id).tags, *args.add_tags]
         if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due, args.note, args.repeat)):
             raise TodoError("nothing to edit; pass --title, -p, -d/--no-due, -t/--no-tags, -n or -r")
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
