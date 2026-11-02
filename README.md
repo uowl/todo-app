@@ -71,6 +71,10 @@ python -m unittest discover -s tests -t . -v
 
 `--due` accepts `YYYY-MM-DD`, `today`, `tomorrow`, `+3d`, `+2w`, or a weekday name (`fri`, `monday`; next occurrence). `todo ls --overdue` shows only overdue tasks.
 
+## Notes
+
+- `todo add "Write report" -n "details..."`, `todo edit 1 -n "new"` (empty string clears), `todo show 1` prints the full task and note. `search` also matches notes.
+
 ## Sorting, colour and export
 - `todo ls --sort priority|due|created` (default `priority`).
 - Output is coloured (overdue/high priority red, done dimmed) only when writing to a terminal; set `NO_COLOR=1` to disable.

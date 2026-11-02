@@ -34,6 +34,7 @@ class Task:
     tags: list[str] = field(default_factory=list)
     created: str = field(default_factory=_now)
     completed: str | None = None
+    note: str = ""
 
     @classmethod
     def from_dict(cls, data: dict) -> "Task":
@@ -155,12 +156,12 @@ class TodoStore:
         raise TodoError(f"no task with id {task_id}")
 
     def add(self, title: str, priority: str = "medium", due: str | None = None,
-            tags: list[str] | None = None) -> Task:
+            tags: list[str] | None = None, note: str = "") -> Task:
         title = title.strip()
         if not title:
             raise TodoError("task title cannot be empty")
         task = Task(id=self.next_id, title=title, priority=validate_priority(priority),
-                    due=validate_due(due), tags=normalize_tags(tags))
+                    due=validate_due(due), tags=normalize_tags(tags), note=(note or "").strip())
         self.next_id += 1
         self.tasks.append(task)
         self.save()
@@ -177,7 +178,7 @@ class TodoStore:
 
     def edit(self, task_id: int, title: str | None = None, priority: str | None = None,
              due: str | None = None, tags: list[str] | None = None,
-             clear_due: bool = False) -> Task:
+             clear_due: bool = False, note: str | None = None) -> Task:
         task = self.get(task_id)
         # Validate everything before mutating so a bad field leaves the task untouched.
         new_title = title.strip() if title is not None else None
@@ -195,6 +196,8 @@ class TodoStore:
             task.due = new_due
         if tags is not None:
             task.tags = normalize_tags(tags)
+        if note is not None:
+            task.note = note.strip()
         self.save()
         return task
 
@@ -230,7 +233,8 @@ class TodoStore:
                         priority=validate_priority(str(item.get("priority") or "medium")),
                         due=validate_due(item.get("due")), tags=normalize_tags(item.get("tags")),
                         created=created if isinstance(created, str) else _now(),
-                        completed=(item.get("completed") or _now()) if done else None)
+                        completed=(item.get("completed") or _now()) if done else None,
+                        note=str(item.get("note") or "").strip())
             next_id += 1
             new.append(task)
         if new:
@@ -273,7 +277,7 @@ class TodoStore:
         if text:
             needle = text.lower()
             result = [t for t in result
-                      if needle in t.title.lower() or needle.lstrip('#') in t.tags]
+                      if needle in t.title.lower() or needle in t.note.lower() or needle.lstrip('#') in t.tags]
         rank = {"high": 0, "medium": 1, "low": 2}
         if sort == "due":
             return sorted(result, key=lambda t: (t.done, t.due or "9999-12-31", rank.get(t.priority, 1), t.id))

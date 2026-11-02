@@ -53,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("-p", "--priority", default="medium", choices=PRIORITIES)
     a.add_argument("-d", "--due", help="due: YYYY-MM-DD, today, tomorrow, +3d, +2w, weekday")
     a.add_argument("-t", "--tag", action="append", dest="tags", help="tag (repeatable)")
+    a.add_argument("-n", "--note", default="", help="longer free-text note")
 
     ls = sub.add_parser("list", aliases=["ls"], help="list tasks (pending by default)")
     g = ls.add_mutually_exclusive_group()
@@ -84,6 +85,11 @@ def build_parser() -> argparse.ArgumentParser:
     tags = e.add_mutually_exclusive_group()
     tags.add_argument("-t", "--tag", action="append", dest="tags", help="replace tags (repeatable)")
     tags.add_argument("--no-tags", action="store_true", help="remove all tags")
+
+    e.add_argument("-n", "--note", help="set the note (empty string clears it)")
+
+    sh = sub.add_parser("show", help="show one task in full, including its note")
+    sh.add_argument("id", type=int)
 
     sub.add_parser("restore", help="undo the last rm/clear")
     sub.add_parser("clear", help="delete all completed tasks")
@@ -127,7 +133,7 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
     cmd = args.command
 
     if cmd == "add":
-        t = store.add(" ".join(args.title), args.priority, args.due, args.tags)
+        t = store.add(" ".join(args.title), args.priority, args.due, args.tags, args.note)
         print(f"Added task {t.id}: {t.title}", file=out)
     elif cmd in ("list", "ls", "search"):
         if cmd == "search":
@@ -152,11 +158,19 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             print(f"Removed task {t.id}: {t.title}", file=out)
     elif cmd == "edit":
         tags = [] if args.no_tags else args.tags
-        if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due)):
+        if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due, args.note)):
             raise TodoError("nothing to edit; pass --title, -p, -d/--no-due or -t/--no-tags")
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
-                       tags=tags, clear_due=args.no_due)
+                       tags=tags, clear_due=args.no_due, note=args.note)
         print(f"Updated: {format_task(t)}", file=out)
+    elif cmd == "show":
+        t = store.get(args.id)
+        print(format_task(t, use_color(out)), file=out)
+        print(f"    created: {t.created}", file=out)
+        if t.completed:
+            print(f"    completed: {t.completed}", file=out)
+        if t.note:
+            print("    note: " + t.note.replace(chr(10), chr(10) + " " * 10), file=out)
     elif cmd == "restore":
         for t in store.restore():
             print(f"Restored task {t.id}: {t.title}", file=out)

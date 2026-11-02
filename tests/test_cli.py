@@ -305,3 +305,23 @@ class ImportTest(ExtrasTest):
         code, _, err = self.run_cli("import", "nope.json")
         self.assertEqual(code, 1)
         self.assertIn("could not read", err)
+
+
+class NoteTests(unittest.TestCase):
+    def test_note_show_edit_search(self):
+        import tempfile, os, io
+        from todo.cli import main
+        with tempfile.TemporaryDirectory() as d:
+            f = os.path.join(d, "t.json")
+            def run(*a):
+                out = io.StringIO()
+                rc = main(["--file", f, *a], out=out, err=io.StringIO())
+                return rc, out.getvalue()
+            self.assertEqual(run("add", "Write", "report", "-n", "line1\nline2")[0], 0)
+            rc, text = run("show", "1")
+            self.assertIn("note: line1", text)
+            self.assertIn("line2", text)
+            self.assertEqual(run("search", "LINE2")[1].count("Write report"), 1)
+            run("edit", "1", "-n", "")
+            self.assertNotIn("note:", run("show", "1")[1])
+            self.assertEqual(run("show", "9")[0], 1)

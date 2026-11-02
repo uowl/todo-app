@@ -21,7 +21,7 @@
 - The `OVERDUE` marker uses the local date.
 
 ## Backlog
-- Subtasks / notes; recurring tasks.
+- Subtasks; recurring tasks.
 - `todo import`.
 - Multi-level undo history (only the last rm/clear is restorable now).
 - CI workflow (GitHub Actions) running the tests on several Python versions.
@@ -46,3 +46,6 @@
 
 ## Improvement round 5
 - Added `todo import FILE|-` (JSON list from `export json`, or a todo data file). IDs are reassigned; validation is all-or-nothing. 48 tests pass. Removed from backlog: import.
+
+## Improvement round 6
+- Added task notes: `add -n/--note`, `edit -n` (empty clears), new `todo show ID`; search and import/export cover notes. 49 tests pass. Removed from backlog: notes (subtasks and recurring still open).
