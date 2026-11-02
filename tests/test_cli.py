@@ -376,3 +376,15 @@ class TagsCommandTest(ExtrasTest):
         self.run_cli("done", "2")
         _, out, _ = self.run_cli("tags")
         self.assertEqual(out.splitlines(), ["#home  1 pending / 1 total", "#work  1 pending / 2 total"])
+
+
+class NextLimitTest(ExtrasTest):
+    def test_next_and_limit(self):
+        self.assertIn("Nothing to do", self.run_cli("next")[1])
+        self.run_cli("add", "low one", "-p", "low")
+        self.run_cli("add", "big one", "-p", "high")
+        self.run_cli("add", "mid one")
+        self.assertIn("big one", self.run_cli("next")[1])
+        _, out, _ = self.run_cli("ls", "--limit", "2")
+        self.assertEqual(len(out.splitlines()), 2)
+        self.assertEqual(self.run_cli("ls", "--limit", "0")[0], 1)

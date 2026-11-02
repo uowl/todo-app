@@ -71,7 +71,9 @@ def build_parser() -> argparse.ArgumentParser:
     ls.add_argument("-t", "--tag", help="filter by tag")
     ls.add_argument("-p", "--priority", choices=PRIORITIES, help="filter by priority")
     ls.add_argument("--sort", choices=SORTS, default="priority", help="sort order")
+    ls.add_argument("--limit", type=int, metavar="N", help="show at most N tasks")
     ls.set_defaults(status="pending")
+    sub.add_parser("next", help="show the single most urgent pending task")
 
     s = sub.add_parser("search", help="search titles and tags (all tasks)")
     s.add_argument("text", nargs="+")
@@ -151,10 +153,18 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
         else:
             tasks = store.query(status=args.status, tag=args.tag, priority=args.priority,
                                overdue=args.overdue, sort=args.sort, due_by=args.due_by)
+        if cmd != "search" and args.limit is not None:
+            if args.limit < 1:
+                raise TodoError("--limit must be at least 1")
+            tasks = tasks[:args.limit]
         if not tasks:
             print("No tasks.", file=out)
         for t in tasks:
             print(format_task(t, use_color(out)), file=out)
+    elif cmd == "next":
+        # Default sort is priority, then due date: the first pending task is the most urgent.
+        tasks = store.query(status="pending")[:1]
+        print(format_task(tasks[0], use_color(out)) if tasks else "Nothing to do!", file=out)
     elif cmd in ("done", "undo"):
         verb = "Completed" if cmd == "done" else "Reopened"
         for i in _checked_ids(store, args.ids):

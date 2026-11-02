@@ -38,6 +38,8 @@ todo list
 | `todo clear` | Delete all completed tasks. |
 | `todo restore` | Undo the last `rm` / `clear` (brings back the whole batch). |
 | `todo stats` | Show total, pending, done and overdue counts. |
+| `todo next` | Show the single most urgent pending task. |
+| `todo ls --limit N` | Show at most N tasks. |
 | `todo tags` | List tags with pending/total counts. |
 
 Lists are sorted with pending tasks first, then by priority (high first), then by due date, then by ID. Priority shows as `!!!` (high), `!!` (medium) or `!` (low). Tasks past their due date are marked `OVERDUE`.
