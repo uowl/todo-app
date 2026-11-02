@@ -79,7 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
     ls.set_defaults(status="pending")
     sub.add_parser("next", help="show the single most urgent pending task")
 
-    s = sub.add_parser("search", help="search titles and tags (all tasks)")
+    s = sub.add_parser("search", help="search titles, tags and notes (all tasks)")
     s.add_argument("text", nargs="+")
 
     for name, help_ in (("done", "mark task(s) complete"), ("undo", "mark task(s) pending"),
