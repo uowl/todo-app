@@ -397,3 +397,29 @@ class AddTagTest(ExtrasTest):
         out = self.run_cli("show", "1")[1]
         self.assertIn("#a #b", out)
         self.assertEqual(self.run_cli("edit", "9", "--add-tag", "z")[0], 1)
+
+
+class TagMaintenanceTest(ExtrasTest):
+    def test_rm_tag_and_rename(self):
+        self.run_cli("add", "a", "-t", "x", "-t", "y")
+        self.run_cli("add", "b", "-t", "x")
+        rc, out, _ = self.run_cli("edit", "1", "--rm-tag", "#X")
+        self.assertEqual(rc, 0)
+        self.assertNotIn("#x", out)
+        self.assertIn("#y", out)
+        rc, out, _ = self.run_cli("edit", "2", "--rm-tag", "x")
+        self.assertEqual(rc, 0)
+        self.assertNotIn("#", out)
+        self.run_cli("edit", "2", "--add-tag", "y")
+        rc, out, _ = self.run_cli("rename-tag", "y", "Z")
+        self.assertEqual(rc, 0)
+        self.assertIn("2 task", out)
+        self.assertIn("#z", self.run_cli("ls")[1])
+
+    def test_rename_tag_merge_and_missing(self):
+        self.run_cli("add", "a", "-t", "x", "-t", "y")
+        self.run_cli("rename-tag", "x", "y")
+        self.assertEqual(self.run_cli("ls")[1].count("#y"), 1)
+        rc, _, err = self.run_cli("rename-tag", "nope", "q")
+        self.assertEqual(rc, 1)
+        self.assertIn("no tasks have tag", err)

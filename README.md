@@ -33,7 +33,8 @@ todo list
 | `todo list -t TAG` / `-p PRIORITY` | Show only tasks with a given tag or priority. |
 | `todo search TEXT` | Search all task titles and tags. Case doesn't matter. |
 | `todo done ID...` / `todo undo ID...` | Mark tasks as completed, or as pending again. |
-| `todo edit ID [--title T] [-p P] [-d DATE \| --no-due] [-t TAG... \| --no-tags]` | Edit a task. `-t` replaces all tags; `--add-tag TAG` appends without replacing. |
+| `todo edit ID [--title T] [-p P] [-d DATE \| --no-due] [-t TAG... \| --no-tags]` | Edit a task. `-t` replaces all tags; `--add-tag TAG` appends without replacing; `--rm-tag TAG` removes one. |
+| `todo rename-tag OLD NEW` | Rename a tag on every task (merges if NEW already exists). |
 | `todo rm ID...` | Delete tasks. |
 | `todo clear` | Delete all completed tasks. |
 | `todo restore` | Undo the last `rm` / `clear` (brings back the whole batch). |

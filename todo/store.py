@@ -261,6 +261,19 @@ class TodoStore:
         self.save()
         return task
 
+    def rename_tag(self, old: str, new: str) -> int:
+        """Rename (or merge into an existing) tag on every task; returns tasks changed."""
+        old, new = (normalize_tags([old]) or [""])[0], (normalize_tags([new]) or [""])[0]
+        if not old or not new:
+            raise TodoError("tag names must not be empty")
+        changed = [t for t in self.tasks if old in t.tags]
+        if not changed:
+            raise TodoError(f"no tasks have tag #{old}")
+        for t in changed:
+            t.tags = normalize_tags([new if g == old else g for g in t.tags])
+        self.save()
+        return len(changed)
+
     def restore(self) -> list[Task]:
         """Bring back the tasks deleted by the most recent rm/clear."""
         if not self.trash:

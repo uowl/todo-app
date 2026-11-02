@@ -61,8 +61,11 @@
 ## Improvement round 10
 - Added `todo tags` (pending/total per tag) and a GitHub Actions workflow (`.github/workflows/tests.yml`, Python 3.10-3.13). 59 tests pass. Backlog: subtasks, multi-level undo.
 
-## Improvement round 11
+## Improvement round 11 (no changes)
 
 
 ## Improvement round 12
 - Added `edit --add-tag` (append tags without replacing). Backlog: subtasks, multi-level undo.
+
+## Improvement round 13
+- Added `edit --rm-tag` and `todo rename-tag OLD NEW` (merges into existing tag). Backlog: subtasks, multi-level undo.

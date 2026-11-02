@@ -11,7 +11,7 @@ from dataclasses import asdict
 from typing import Sequence, TextIO
 
 from . import __version__
-from .store import PRIORITIES, REPEATS, SORTS, Task, TodoError, TodoStore
+from .store import PRIORITIES, normalize_tags, REPEATS, SORTS, Task, TodoError, TodoStore
 
 PRIORITY_MARK = {"high": "!!!", "medium": "!! ", "low": "!  "}
 
@@ -95,6 +95,8 @@ def build_parser() -> argparse.ArgumentParser:
     tags.add_argument("--no-tags", action="store_true", help="remove all tags")
     tags.add_argument("--add-tag", action="append", dest="add_tags", metavar="TAG",
                       help="add a tag, keeping existing ones (repeatable)")
+    tags.add_argument("--rm-tag", action="append", dest="rm_tags", metavar="TAG",
+                      help="remove a tag, keeping the others (repeatable)")
 
     e.add_argument("-n", "--note", help="set the note (empty string clears it)")
     e.add_argument("-r", "--repeat", choices=REPEATS + ("none",), help="set recurrence (none clears)")
@@ -111,6 +113,9 @@ def build_parser() -> argparse.ArgumentParser:
     im.add_argument("source", metavar="FILE")
 
     sub.add_parser("stats", help="show task counts")
+    rt = sub.add_parser("rename-tag", help="rename a tag on all tasks (merges if NEW exists)")
+    rt.add_argument("old")
+    rt.add_argument("new")
     sub.add_parser("tags", help="list tags with pending/total counts")
     return p
 
@@ -187,7 +192,12 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
         tags = [] if args.no_tags else args.tags
         if args.add_tags:
             tags = [*store.get(args.id).tags, *args.add_tags]
-        if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due, args.note, args.repeat)):
+        if args.rm_tags:
+            drop = set(normalize_tags(args.rm_tags))
+            tags = [g for g in store.get(args.id).tags if g not in drop]
+            if not tags:  # empty list would look like "no change"; use the explicit clear path
+                args.no_tags = True
+        if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_tags, args.no_due, args.note, args.repeat)):
             raise TodoError("nothing to edit; pass --title, -p, -d/--no-due, -t/--no-tags, -n or -r")
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
                        tags=tags, clear_due=args.no_due, note=args.note, repeat=args.repeat)
@@ -223,6 +233,9 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
         print(f"Imported {len(store.import_tasks(data))} task(s).", file=out)
     elif cmd == "clear":
         print(f"Removed {store.clear_done()} completed task(s).", file=out)
+    elif cmd == "rename-tag":
+        n = store.rename_tag(args.old, args.new)
+        print(f"Renamed #{args.old.lstrip('#').lower()} to #{args.new.lstrip('#').lower()} on {n} task(s).", file=out)
     elif cmd == "tags":
         counts: dict[str, list[int]] = {}
         for t in store.tasks:
