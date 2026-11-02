@@ -69,6 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
     ls.add_argument("--overdue", action="store_true", help="only overdue tasks")
     ls.add_argument("--due-by", metavar="DATE", help="only tasks due on or before DATE (same formats as add -d)")
     ls.add_argument("-t", "--tag", help="filter by tag")
+    ls.add_argument("--untagged", action="store_true", help="only tasks with no tags")
     ls.add_argument("-p", "--priority", choices=PRIORITIES, help="filter by priority")
     ls.add_argument("--sort", choices=SORTS, default="priority", help="sort order")
     ls.add_argument("--limit", type=int, metavar="N", help="show at most N tasks")
@@ -159,7 +160,7 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             tasks = store.query(status="all", text=" ".join(args.text))
         else:
             tasks = store.query(status=args.status, tag=args.tag, priority=args.priority,
-                               overdue=args.overdue, sort=args.sort, due_by=args.due_by)
+                               overdue=args.overdue, sort=args.sort, due_by=args.due_by, untagged=args.untagged)
         if cmd != "search" and args.limit is not None:
             if args.limit < 1:
                 raise TodoError("--limit must be at least 1")

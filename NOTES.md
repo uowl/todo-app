@@ -72,3 +72,6 @@
 
 ## Improvement round 14
 - `ls --limit` now prints "(showing N of M)" when truncated. Backlog: subtasks, multi-level undo.
+
+## Improvement round 15
+- Added `ls --untagged`. Backlog: subtasks, multi-level undo.

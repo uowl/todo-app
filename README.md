@@ -40,6 +40,7 @@ todo list
 | `todo restore` | Undo the last `rm` / `clear` (brings back the whole batch). |
 | `todo stats` | Show total, pending, done and overdue counts. |
 | `todo next` | Show the single most urgent pending task. |
+| `todo ls --untagged` | Only tasks with no tags. |
 | `todo ls --limit N` | Show at most N tasks (prints "showing N of M" if truncated). |
 | `todo tags` | List tags with pending/total counts. |
 

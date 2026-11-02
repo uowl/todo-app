@@ -379,6 +379,13 @@ class TagsCommandTest(ExtrasTest):
 
 
 class NextLimitTest(ExtrasTest):
+    def test_untagged(self):
+        self.run_cli("add", "plain")
+        self.run_cli("add", "tagged", "-t", "x")
+        _, out, _ = self.run_cli("ls", "--untagged")
+        self.assertIn("plain", out)
+        self.assertNotIn("tagged", out.replace("untagged", ""))
+
     def test_next_and_limit(self):
         self.assertIn("Nothing to do", self.run_cli("next")[1])
         self.run_cli("add", "low one", "-p", "low")
