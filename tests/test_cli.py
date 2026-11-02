@@ -511,3 +511,32 @@ class SubtaskRoundTripTests(CliTestCase):
         self.assertEqual(code, 0)
         _, out, _ = self.run_cli("ls")
         self.assertIn("(subtask of 5)", out)
+
+
+class MultiUndoAndIndentTests(CliTestCase):
+    def test_multi_level_restore(self):
+        for n in "abc":
+            self.run_cli("add", n)
+        self.run_cli("rm", "1")
+        self.run_cli("rm", "2")
+        self.run_cli("restore")
+        out = self.run_cli("ls")[1]
+        self.assertIn("b", out)
+        self.assertNotIn(" a", out)
+        self.run_cli("restore")
+        self.assertIn(" a", self.run_cli("ls")[1])
+        self.assertEqual(self.run_cli("restore")[0], 1)
+
+    def test_restore_after_rm_single(self):
+        self.run_cli("add", "x")
+        self.run_cli("rm", "1")
+        self.assertEqual(self.run_cli("restore")[0], 0)
+
+    def test_ls_indents_subtasks(self):
+        self.run_cli("add", "parent")
+        self.run_cli("add", "other")
+        self.run_cli("add", "kid", "--parent", "1")
+        lines = self.run_cli("ls")[1].splitlines()
+        i = next(k for k, l in enumerate(lines) if "parent" in l)
+        self.assertTrue(lines[i + 1].startswith("    "))
+        self.assertIn("kid", lines[i + 1])

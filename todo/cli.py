@@ -188,8 +188,13 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             return 0
         if not tasks:
             print("No tasks.", file=out)
-        for t in tasks:
+        shown = {t.id for t in tasks}
+        tops = [t for t in tasks if t.parent not in shown]
+        for t in tops:  # subtasks are grouped, indented, under a listed parent
             print(format_task(t, use_color(out)), file=out)
+            for c in tasks:
+                if c.parent == t.id:
+                    print("    " + format_task(c, use_color(out)), file=out)
         if len(tasks) < total:
             print(f"(showing {len(tasks)} of {total})", file=out)
     elif cmd == "next":
@@ -208,10 +213,12 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
                 print(f"  Next {nxt.repeat} occurrence: task {nxt.id} (due {nxt.due})", file=out)
     elif cmd == "rm":
         removed = []
+        mark = len(store.history)
         for i in _checked_ids(store, args.ids):
             if i not in {t.id for t in removed}:  # may already be gone as a subtask
                 removed.extend([store.get(i), *store.subtasks(i)])
                 store.remove(i)
+        del store.history[mark:]  # collapse per-id batches into one
         store.trash = removed  # restore brings back the whole batch
         store.save()
         for t in removed:

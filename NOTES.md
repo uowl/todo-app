@@ -135,3 +135,6 @@
 
 ## Improvement round 36
 - Subtasks now round-trip: `export json` keeps `parent`, `import` re-links parents to new IDs, csv has a `parent` column, markdown indents subtasks. Tests pass. Remaining: indented `ls`, multi-level undo.
+
+## Improvement round 37
+- Multi-level undo: `restore` steps back through up to 20 rm/clear batches (`trash_history` in the JSON; legacy `trash` still loads). `ls` now groups/indents subtasks under a listed parent. 115 tests pass. Backlog now empty.

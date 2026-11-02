@@ -21,6 +21,9 @@ class TodoError(Exception):
     """User-facing error (bad id, bad input, corrupt file...)."""
 
 
+MAX_HISTORY = 20  # how many rm/clear batches `restore` can step back through
+
+
 def _now() -> str:
     return datetime.now().isoformat(timespec="seconds")
 
@@ -149,19 +152,34 @@ class TodoStore:
         self.path = resolve_path(path)
         self.tasks: list[Task] = []
         self.next_id = 1
-        self.trash: list[Task] = []  # tasks removed by the last rm/clear
+        self.history: list[list[Task]] = []  # batches removed by rm/clear, newest last
         self.load()
+
+    @property
+    def trash(self) -> list[Task]:
+        """The most recently removed batch (empty if none)."""
+        return self.history[-1] if self.history else []
+
+    @trash.setter
+    def trash(self, batch: list[Task]) -> None:
+        if batch:
+            self.history.append(list(batch))
+            del self.history[:-MAX_HISTORY]
 
     # ---- persistence -------------------------------------------------
     def load(self) -> None:
         if not self.path.exists():
-            self.tasks, self.next_id, self.trash = [], 1, []
+            self.tasks, self.next_id, self.history = [], 1, []
             return
         try:
             raw = json.loads(self.path.read_text(encoding="utf-8") or "{}")
             self.tasks = [Task.from_dict(t) for t in raw.get("tasks", [])]
             stored_next = int(raw.get("next_id", 1))
-            self.trash = [Task.from_dict(t) for t in raw.get("trash", [])]
+            if "trash_history" in raw:
+                self.history = [[Task.from_dict(t) for t in b] for b in raw["trash_history"]]
+            else:  # older files: a single batch under "trash"
+                legacy = [Task.from_dict(t) for t in raw.get("trash", [])]
+                self.history = [legacy] if legacy else []
         except (json.JSONDecodeError, TypeError, AttributeError, ValueError, KeyError):
             raise TodoError(f"could not read {self.path}: file is corrupt or not a todo "
                             "file (fix or delete it)") from None
@@ -171,7 +189,7 @@ class TodoStore:
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = {"version": 1, "next_id": self.next_id, "tasks": [asdict(t) for t in self.tasks],
-                   "trash": [asdict(t) for t in self.trash]}
+                   "trash_history": [[asdict(t) for t in b] for b in self.history]}
         # Atomic write: temp file in the same dir, then replace.
         fd, tmp = tempfile.mkstemp(dir=self.path.parent, prefix=".todo-", suffix=".tmp")
         try:
@@ -295,7 +313,7 @@ class TodoStore:
         """Bring back the tasks deleted by the most recent rm/clear."""
         if not self.trash:
             raise TodoError("nothing to restore")
-        restored, self.trash = self.trash, []
+        restored = self.history.pop()
         live = {t.id for t in self.tasks} | {t.id for t in restored}
         for t in restored:  # parent permanently gone: promote to top level
             if t.parent is not None and t.parent not in live:
