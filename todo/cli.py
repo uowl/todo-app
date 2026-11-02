@@ -73,6 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
     ls.add_argument("--untagged", action="store_true", help="only tasks with no tags")
     ls.add_argument("-p", "--priority", choices=PRIORITIES, help="filter by priority")
     ls.add_argument("--sort", choices=SORTS, default="priority", help="sort order")
+    ls.add_argument("--reverse", action="store_true", help="reverse the sort order")
     ls.add_argument("--limit", type=int, metavar="N", help="show at most N tasks")
     ls.set_defaults(status="pending")
     sub.add_parser("next", help="show the single most urgent pending task")
@@ -163,6 +164,8 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             tasks = store.query(status=args.status, tag=args.tag, priority=args.priority,
                                overdue=args.overdue, sort=args.sort, due_by=args.due_by, untagged=args.untagged,
                                undated=args.undated)
+        if cmd != "search" and args.reverse:
+            tasks = tasks[::-1]
         if cmd != "search" and args.limit is not None:
             if args.limit < 1:
                 raise TodoError("--limit must be at least 1")

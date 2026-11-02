@@ -393,6 +393,12 @@ class NextLimitTest(ExtrasTest):
         self.assertIn("nodate", out)
         self.assertNotIn("2030", out)
 
+    def test_reverse(self):
+        self.run_cli("add", "low one", "-p", "low")
+        self.run_cli("add", "big one", "-p", "high")
+        _, out, _ = self.run_cli("ls", "--reverse")
+        self.assertLess(out.index("low one"), out.index("big one"))
+
     def test_next_and_limit(self):
         self.assertIn("Nothing to do", self.run_cli("next")[1])
         self.run_cli("add", "low one", "-p", "low")
