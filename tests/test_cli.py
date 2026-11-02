@@ -489,3 +489,25 @@ class SubtaskTests(unittest.TestCase):
         self.assertIn("No tasks", self.run_cli("ls")[1])
         self.run_cli("restore")
         self.assertIn("child", self.run_cli("ls")[1])
+
+
+class SubtaskRoundTripTests(CliTestCase):
+    def test_export_import_keeps_subtasks(self):
+        self.run_cli("add", "gap")
+        self.run_cli("add", "parent")
+        self.run_cli("add", "child", "--parent", "2")
+        _, exported, _ = self.run_cli("export")
+        _, md, _ = self.run_cli("export", "-f", "markdown")
+        self.assertIn("  - [ ] child", md)
+        _, csv_out, _ = self.run_cli("export", "-f", "csv")
+        self.assertIn("parent", csv_out.splitlines()[0])
+        import io as _io, sys
+        old = sys.stdin
+        sys.stdin = _io.StringIO(exported)
+        try:
+            code, _, _ = self.run_cli("import", "-")
+        finally:
+            sys.stdin = old
+        self.assertEqual(code, 0)
+        _, out, _ = self.run_cli("ls")
+        self.assertIn("(subtask of 5)", out)

@@ -127,6 +127,14 @@ def normalize_tags(tags: list[str] | None) -> list[str]:
     return out
 
 
+def _parent_of(items: list, exported_id: int):
+    """Parent of the exported item with this id (None if top-level)."""
+    for it in items:
+        if it.get("id") == exported_id:
+            return it.get("parent")
+    return None
+
+
 def resolve_path(path: str | os.PathLike | None = None) -> Path:
     if path:
         return Path(path)
@@ -300,6 +308,7 @@ class TodoStore:
         """Add tasks from export-style dicts under fresh IDs. All-or-nothing."""
         new: list[Task] = []
         next_id = self.next_id
+        id_map: dict = {}  # exported id -> new id, to re-link subtasks
         for i, item in enumerate(items, 1):
             if not isinstance(item, dict):
                 raise TodoError(f"import item {i} is not an object")
@@ -315,8 +324,16 @@ class TodoStore:
                         completed=(item.get("completed") or _now()) if done else None,
                         note=str(item.get("note") or "").strip(),
                         repeat=validate_repeat(item.get("repeat")))
+            if isinstance(item.get("id"), int) and not isinstance(item["id"], bool):
+                id_map.setdefault(item["id"], task.id)
             next_id += 1
             new.append(task)
+        for task, item in zip(new, items):  # parents must be top-level tasks in the batch
+            old = item.get("parent")
+            new_parent = id_map.get(old) if isinstance(old, int) else None
+            top = next((t for t in new if t.id == new_parent), None)
+            if top is not None and top is not task and not _parent_of(items, old):
+                task.parent = new_parent
         if new:
             self.tasks.extend(new)
             self.next_id = next_id

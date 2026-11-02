@@ -132,3 +132,6 @@
 
 ## Improvement round 35
 - Added one-level subtasks: `add --parent ID`, shown in `ls` as "(subtask of N)" and under `show`; `rm` cascades to subtasks (restorable). 81 tests pass. Remaining: parent in import/export, indented `ls`, multi-level undo.
+
+## Improvement round 36
+- Subtasks now round-trip: `export json` keeps `parent`, `import` re-links parents to new IDs, csv has a `parent` column, markdown indents subtasks. Tests pass. Remaining: indented `ls`, multi-level undo.

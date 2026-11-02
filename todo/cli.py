@@ -133,17 +133,22 @@ def export_tasks(tasks: Sequence[Task], fmt: str, out: TextIO) -> None:
         print(file=out)
     elif fmt == "csv":
         w = csv.writer(out, lineterminator=chr(10))
-        w.writerow(["id", "title", "done", "priority", "due", "tags", "note", "repeat"])
+        w.writerow(["id", "title", "done", "priority", "due", "tags", "note", "repeat", "parent"])
         for t in tasks:
             w.writerow([t.id, t.title, "yes" if t.done else "no", t.priority, t.due or "",
-                        ",".join(t.tags), t.note, t.repeat or ""])
+                        ",".join(t.tags), t.note, t.repeat or "", t.parent or ""])
     else:
-        for t in tasks:
+        ids = {t.id for t in tasks}
+        ordered = [t for t in tasks if t.parent not in ids]
+        for t in list(ordered):
+            ordered[ordered.index(t) + 1:ordered.index(t) + 1] = [c for c in tasks if c.parent == t.id]
+        for t in ordered:
+            ind = "  " if t.parent in ids else ""
             extra = f" (due {t.due})" if t.due else ""
             extra += "".join(f" #{g}" for g in t.tags)
-            print(f"- [{'x' if t.done else ' '}] {t.title}{extra}", file=out)
+            print(f"{ind}- [{'x' if t.done else ' '}] {t.title}{extra}", file=out)
             for line in t.note.splitlines():
-                print(f"  > {line}", file=out)
+                print(f"{ind}  > {line}", file=out)
 
 
 def _checked_ids(store: TodoStore, ids: Sequence[int]) -> list[int]:
