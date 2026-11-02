@@ -98,6 +98,8 @@ python -m unittest discover -s tests -t . -v
 
 `todo web [--port 8765] [--host 127.0.0.1] [--open]` serves a local single-page app on the same data file
 Shortcuts: `n` new task, `/` focus search. In the Done view, "Clear completed" removes finished tasks (undo toast restores them).
+
+Appearance (🎨 button): five themes (System, Light, Dark, Midnight, Sepia) and six accent colours, remembered in the browser. The header shows today's date; the **Calendar** tab shows a month grid with task dots, lets you pick a day to see/add its tasks, and the task dialog has a date picker.
 (`--file`/`TODO_FILE` honoured). It follows Apple's design language: SF system font, translucent blurred
 header, segmented Pending/Done/All control, rounded inset-grouped list, priority-coloured circle checkboxes,
 sheet-style edit dialog, undo toast after delete, automatic light/dark mode. Supports add, edit, complete,

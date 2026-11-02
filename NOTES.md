@@ -153,3 +153,6 @@
 
 ## Improvement round 42
 - Web GUI polish ("professional look"): quick-add bar, progress bar and "N of M completed", tab counts, pending view grouped by Overdue/Today/Upcoming/No date, high-priority chip, hover/focus states, keyboard-operable rows, error toasts instead of alert(), friendlier empty states. 122 tests pass; JS syntax checked with node. Backlog: no browser-automation test of the front end. The second "now" request had no content and was ignored.
+
+## Improvement round 43
+- Web GUI: theme picker (System/Light/Dark/Midnight/Sepia) + 6 accent colours (localStorage), today's date in header, Calendar tab (month grid with task dots, day selection, add-for-day), native date picker in the task dialog. 123 tests pass; JS syntax checked. Backlog: no browser-automation test of the front end.

@@ -8,6 +8,32 @@
 <style>
 :root{--bg:#f2f2f7;--card:#fff;--label:#000;--label2:#6c6c70;--sep:rgba(60,60,67,.18);--blue:#007aff;--red:#ff3b30;--orange:#ff9500;--green:#34c759;--fill:rgba(118,118,128,.12);--bar:rgba(242,242,247,.72)}
 @media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--label:#fff;--label2:#98989f;--sep:rgba(84,84,88,.6);--blue:#0a84ff;--red:#ff453a;--orange:#ff9f0a;--green:#30d158;--fill:rgba(118,118,128,.24);--bar:rgba(0,0,0,.72)}}
+:root[data-theme=light]{--bg:#f2f2f7;--card:#fff;--label:#000;--label2:#6c6c70;--sep:rgba(60,60,67,.18);--fill:rgba(118,118,128,.12);--bar:rgba(242,242,247,.72);color-scheme:light}
+:root[data-theme=dark]{--bg:#000;--card:#1c1c1e;--label:#fff;--label2:#98989f;--sep:rgba(84,84,88,.6);--fill:rgba(118,118,128,.24);--bar:rgba(0,0,0,.72);color-scheme:dark}
+:root[data-theme=midnight]{--bg:#0b1220;--card:#131c30;--label:#e8eefc;--label2:#8d9bbb;--sep:rgba(120,140,190,.25);--fill:rgba(120,140,190,.16);--bar:rgba(11,18,32,.75);color-scheme:dark}
+:root[data-theme=sepia]{--bg:#f4ecd8;--card:#fbf6e9;--label:#3b2f1e;--label2:#85755c;--sep:rgba(90,70,40,.2);--fill:rgba(120,95,50,.12);--bar:rgba(244,236,216,.78);color-scheme:light}
+:root[data-accent=purple]{--blue:#af52de}:root[data-accent=green]{--blue:#28a745}:root[data-accent=orange]{--blue:#f08a00}:root[data-accent=pink]{--blue:#ff2d78}:root[data-accent=teal]{--blue:#00a5b5}
+.date{font-size:15px;color:var(--label2);margin:-4px 0 8px}
+.tools{display:flex;gap:8px;align-items:center}
+.ibtn{border:0;background:var(--fill);border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px}
+.pop{position:absolute;right:16px;top:56px;background:var(--card);border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.3);padding:14px;display:none;z-index:30;width:250px}
+.pop h4{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--label2)}
+.opts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.opts button{border:1.5px solid transparent;background:var(--fill);border-radius:8px;padding:5px 10px;font-size:13px;cursor:pointer}
+.opts button.on{border-color:var(--blue)}
+.sw{width:26px;height:26px;border-radius:50%;padding:0!important;border:2px solid transparent}
+.sw.on{outline:2px solid var(--label2);outline-offset:2px}
+.cal{background:var(--card);border-radius:12px;padding:12px;margin-bottom:16px}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.ch b{font-size:18px}.ch button{border:0;background:var(--fill);border-radius:8px;padding:4px 10px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.grid .dow{font-size:11px;color:var(--label2);text-transform:uppercase;padding:4px 0}
+.day{border:0;background:none;border-radius:10px;padding:6px 0 4px;min-height:48px;cursor:pointer;font-size:15px;display:flex;flex-direction:column;align-items:center;gap:3px}
+.day:hover{background:var(--fill)}.day.out{color:var(--label2);opacity:.45}
+.day.today span{background:var(--blue);color:#fff;border-radius:50%;width:26px;height:26px;display:grid;place-items:center}
+.day.sel{background:var(--fill);outline:2px solid var(--blue)}
+.dots{display:flex;gap:2px;height:6px}.dots i{width:5px;height:5px;border-radius:50%;background:var(--blue)}.dots i.od{background:var(--red)}.dots i.dn{background:var(--green)}
+.f .pick{flex:none;width:auto;color:var(--blue)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--label);font:17px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 header{position:sticky;top:0;z-index:5;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--sep);padding:12px 16px 10px}
@@ -66,9 +92,10 @@ button:focus-visible,input:focus-visible,select:focus-visible,.row:focus-visible
 </head>
 <body>
 <header><div class="wrap">
-<div class="top"><h1>Todo</h1><span class="sub-h" id="sub"></span></div><div class="prog"><i id="pb"></i></div>
+<div class="top"><h1>Todo</h1><div class="tools"><span class="sub-h" id="sub" style="margin:0"></span><button class="ibtn" id="tbtn" aria-label="Appearance" title="Appearance">🎨</button></div></div><div class="date" id="date"></div>
+<div class="pop" id="pop"><h4>Theme</h4><div class="opts" id="themes"></div><h4>Accent</h4><div class="opts" id="accents"></div></div><div class="prog"><i id="pb"></i></div>
 <input class="search" id="q" type="search" placeholder="Search" aria-label="Search">
-<div class="seg" id="seg"><button data-s="pending" class="on">Pending<span class="cnt" id="c1"></span></button><button data-s="done">Done<span class="cnt" id="c2"></span></button><button data-s="all">All<span class="cnt" id="c3"></span></button></div>
+<div class="seg" id="seg"><button data-s="pending" class="on">Pending<span class="cnt" id="c1"></span></button><button data-s="done">Done<span class="cnt" id="c2"></span></button><button data-s="all">All<span class="cnt" id="c3"></span></button><button data-s="cal">Calendar</button></div>
 </div></header>
 <main class="wrap"><form class="quick" id="qf"><input id="qa" placeholder="Add a task… (Enter)" aria-label="Quick add" autocomplete="off"><button>Add</button></form><div id="list"></div><div style="text-align:center;margin:16px"><button class="undo-link" id="clr" style="display:none;border:0;background:none;color:var(--red);font-weight:600;cursor:pointer">Clear completed</button></div></main>
 <button class="fab" id="add" aria-label="New task">+</button>
@@ -77,7 +104,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,.row:focus-visible
 <dialog id="dlg"><form id="form" method="dialog">
 <div class="f"><label for="title">Title</label><input id="title" required autocomplete="off"></div>
 <div class="f"><label for="priority">Priority</label><select id="priority"><option>low</option><option selected>medium</option><option>high</option></select></div>
-<div class="f"><label for="due">Due</label><input id="due" placeholder="YYYY-MM-DD, tomorrow, +3d"></div>
+<div class="f"><label for="due">Due</label><input id="due" placeholder="YYYY-MM-DD, tomorrow, +3d"><input type="date" id="dpick" class="pick" aria-label="Pick date"></div>
 <div class="f"><label for="tags">Tags</label><input id="tags" placeholder="comma separated"></div>
 <div class="f"><label for="repeat">Repeat</label><select id="repeat"><option value="">never</option><option>daily</option><option>weekly</option><option>monthly</option></select></div>
 <div class="f"><label for="note">Note</label><textarea id="note" rows="2"></textarea></div>
@@ -89,12 +116,24 @@ const $=id=>document.getElementById(id);
 let status="pending",editing=null,tasks=[];
 async function api(m,u,b){const r=await fetch(u,{method:m,headers:{"Content-Type":"application/json"},body:b?JSON.stringify(b):undefined});const d=await r.json();if(!r.ok)throw new Error(d.error||r.status);return d}
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-async function load(){tasks=await api("GET","/api/tasks?status="+status+"&q="+encodeURIComponent($("q").value));render();counts()}
+async function load(){tasks=await api("GET","/api/tasks?status="+(status==="cal"?"all":status)+"&q="+encodeURIComponent($("q").value));render();counts()}
 function row(t,sub){const meta=[];if(t.due)meta.push(`<span class="${t.overdue?"od":""}">${t.overdue?"Overdue · ":""}${esc(t.due)}</span>`);
  if(t.repeat)meta.push("↻ "+t.repeat);t.tags.forEach(g=>meta.push(`<span class="tag">#${esc(g)}</span>`));if(t.note)meta.push("note");if(t.priority==="high"&&!t.done)meta.unshift(`<span class="chip high">high</span>`);
  return `<div class="row ${sub?"sub":""} ${t.done?"done":""}" data-id="${t.id}" tabindex="0"><button class="circle ${t.priority}" data-c="${t.id}" aria-label="Toggle done"></button><div class="body"><div class="t">${esc(t.title)}</div>${meta.length?`<div class="meta">${meta.join("")}</div>`:""}</div></div>`}
 function grp(t){if(t.overdue)return"Overdue";if(!t.due)return"No date";const l=new Date();const today=l.getFullYear()+"-"+String(l.getMonth()+1).padStart(2,"0")+"-"+String(l.getDate()).padStart(2,"0");return t.due===today?"Today":"Upcoming"}
-function render(){const ids=new Set(tasks.map(t=>t.id));const tops=tasks.filter(t=>!ids.has(t.parent));
+const MN=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const iso=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+let cm=new Date(),sel=iso(new Date());cm.setDate(1);
+function renderCal(){const y=cm.getFullYear(),m=cm.getMonth(),first=new Date(y,m,1),start=new Date(y,m,1-first.getDay()),td=iso(new Date());
+ const by={};tasks.forEach(t=>{if(t.due)(by[t.due]=by[t.due]||[]).push(t)});
+ let h=`<div class="cal"><div class="ch"><button data-n="-1" aria-label="Previous month">‹</button><b>${MN[m]} ${y}</b><span><button data-n="0">Today</button> <button data-n="1" aria-label="Next month">›</button></span></div><div class="grid">`+["S","M","T","W","T","F","S"].map(d=>`<div class="dow">${d}</div>`).join("");
+ for(let i=0;i<42;i++){const d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),k=iso(d),ts=by[k]||[];
+  const dots=ts.slice(0,3).map(t=>`<i class="${t.done?"dn":t.overdue?"od":""}"></i>`).join("");
+  h+=`<button class="day ${d.getMonth()!==m?"out":""} ${k===td?"today":""} ${k===sel?"sel":""}" data-d="${k}" aria-label="${k}, ${ts.length} tasks"><span>${d.getDate()}</span><div class="dots">${dots}</div></button>`}
+ h+="</div></div>";const ds=(by[sel]||[]);const dd=new Date(sel+"T00:00:00");
+ h+=`<div class="gh">${dd.toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric"})}</div>`+(ds.length?`<div class="card">${ds.map(t=>row(t)).join("")}</div>`:`<div class="empty">Nothing due.<br><button id="calnew" style="border:0;background:none;color:var(--blue);font-weight:600;cursor:pointer;margin-top:8px">+ Add task for this day</button></div>`);
+ $("list").innerHTML=h}
+function render(){if(status==="cal")return renderCal();const ids=new Set(tasks.map(t=>t.id));const tops=tasks.filter(t=>!ids.has(t.parent));
  const card=ts=>`<div class="card">${ts.map(t=>row(t)+tasks.filter(c=>c.parent===t.id).map(c=>row(c,1)).join("")).join("")}</div>`;
  if(!tops.length){$("list").innerHTML=`<div class="empty"><b>${status==="done"?"Nothing completed yet":"All clear"}</b>${status==="pending"?"Add a task above to get started.":"No tasks here."}</div>`;return}
  if(status!=="pending"){$("list").innerHTML=card(tops);return}
@@ -104,7 +143,11 @@ async function counts(){try{const a=await api("GET","/api/tasks?status=all");con
 function toast(m){const e=$("toast");e.textContent=m;e.style.display="block";setTimeout(()=>e.style.display="none",4000)}
 $("qf").onsubmit=async e=>{e.preventDefault();const v=$("qa").value.trim();if(!v)return;try{await api("POST","/api/tasks",{title:v});$("qa").value="";load()}catch(x){toast(x.message)}};
 $("list").onkeydown=e=>{if(e.key==="Enter"&&e.target.classList.contains("row"))e.target.click()};
-$("list").onclick=async e=>{const c=e.target.closest("[data-c]");try{if(c){const t=tasks.find(x=>x.id==c.dataset.c);await api("PATCH","/api/tasks/"+t.id,{done:!t.done});load()}else{const r=e.target.closest(".row");if(r)openDlg(tasks.find(x=>x.id==r.dataset.id))}}catch(x){toast(x.message)}};
+$("list").onclick=async e=>{const n=e.target.closest("[data-n]"),dy=e.target.closest("[data-d]");
+ if(n){const v=+n.dataset.n;if(v===0){cm=new Date();cm.setDate(1);sel=iso(new Date())}else cm=new Date(cm.getFullYear(),cm.getMonth()+v,1);return render()}
+ if(dy){sel=dy.dataset.d;return render()}
+ if(e.target.id==="calnew"){openDlg();$("due").value=sel;return}
+ const c=e.target.closest("[data-c]");try{if(c){const t=tasks.find(x=>x.id==c.dataset.c);await api("PATCH","/api/tasks/"+t.id,{done:!t.done});load()}else{const r=e.target.closest(".row");if(r)openDlg(tasks.find(x=>x.id==r.dataset.id))}}catch(x){toast(x.message)}};
 $("seg").onclick=e=>{const b=e.target.closest("button");if(!b)return;status=b.dataset.s;[...$("seg").children].forEach(x=>x.classList.toggle("on",x===b));load()};
 let tm;$("q").oninput=()=>{clearTimeout(tm);tm=setTimeout(load,150)};
 function openDlg(t){editing=t||null;$("title").value=t?t.title:"";$("priority").value=t?t.priority:"medium";$("due").value=t&&t.due||"";$("tags").value=t?t.tags.join(", "):"";$("repeat").value=t&&t.repeat||"";$("note").value=t?t.note:"";$("del").style.display=t?"":"none";$("err").style.display="none";$("dlg").showModal();$("title").focus()}
@@ -116,6 +159,18 @@ $("ubtn").onclick=async()=>{try{await api("POST","/api/restore",{});$("undo").st
 $("clr").onclick=async()=>{if(!confirm("Remove all completed tasks?"))return;try{const r=await api("POST","/api/clear",{});$("umsg").textContent="Removed "+r.removed;$("undo").style.display="flex";clearTimeout(ut);ut=setTimeout(()=>$("undo").style.display="none",6000);load()}catch(x){toast(x.message)}};
 const _render=render;render=function(){_render();$("clr").style.display=status==="done"&&tasks.length?"":"none"};
 document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey||$("dlg").open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(e.key==="n"){e.preventDefault();openDlg()}else if(e.key==="/"){e.preventDefault();$("q").focus()}});
+const THEMES=[["system","System"],["light","Light"],["dark","Dark"],["midnight","Midnight"],["sepia","Sepia"]],ACC=[["blue","#007aff"],["purple","#af52de"],["green","#28a745"],["orange","#f08a00"],["pink","#ff2d78"],["teal","#00a5b5"]];
+const ls=(k,d)=>{try{return localStorage.getItem(k)||d}catch(x){return d}},lset=(k,v)=>{try{localStorage.setItem(k,v)}catch(x){}};
+function applyTheme(){const t=ls("theme","system"),a=ls("accent","blue"),r=document.documentElement;
+ if(t==="system")r.removeAttribute("data-theme");else r.dataset.theme=t;if(a==="blue")r.removeAttribute("data-accent");else r.dataset.accent=a;
+ $("themes").innerHTML=THEMES.map(([k,n])=>`<button data-t="${k}" class="${k===t?"on":""}">${n}</button>`).join("");
+ $("accents").innerHTML=ACC.map(([k,c])=>`<button data-a="${k}" class="sw ${k===a?"on":""}" style="background:${c}" aria-label="${k}"></button>`).join("")}
+$("pop").onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.dataset.t)lset("theme",b.dataset.t);if(b.dataset.a)lset("accent",b.dataset.a);applyTheme()};
+$("tbtn").onclick=e=>{e.stopPropagation();const p=$("pop");p.style.display=p.style.display==="block"?"none":"block"};
+document.addEventListener("click",e=>{if(!e.target.closest("#pop"))$("pop").style.display="none"});
+$("dpick").onchange=()=>{if($("dpick").value)$("due").value=$("dpick").value};
+function showDate(){$("date").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"})}
+applyTheme();showDate();setInterval(showDate,60000);
 load();
 </script>
 </body>

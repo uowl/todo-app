@@ -95,3 +95,11 @@ class IndexPageTest(unittest.TestCase):
         html = (Path(__file__).parent.parent / "todo" / "index.html").read_text(encoding="utf-8")
         for needle in ('id="qf"', 'id="pb"', 'id="toast"', "Overdue"):
             self.assertIn(needle, html)
+
+
+class TestFrontEndAssets(unittest.TestCase):
+    def test_index_has_themes_calendar_and_date(self):
+        from todo.web import STATIC
+        html = STATIC.read_text(encoding="utf-8")
+        for needle in ('data-s="cal"', "renderCal", "midnight", "sepia", 'id="date"', 'type="date"'):
+            self.assertIn(needle, html)
