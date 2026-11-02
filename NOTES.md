@@ -120,3 +120,6 @@
 
 ## Improvement round 31
 - Fixed `search` help text to mention notes. 79 tests pass. Backlog (subtasks, multi-level undo) unchanged.
+
+## Improvement round 32 (no changes)
+- Reviewed; 79 tests pass. Backlog (subtasks, multi-level undo) unchanged.
