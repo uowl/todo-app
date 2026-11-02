@@ -33,6 +33,20 @@ class WebTest(unittest.TestCase):
         s, d = self.call(*a, **k)
         return s, json.loads(d)
 
+    def test_clear_completed_and_restore(self):
+        _, t = self.j("POST", "/api/tasks", {"title": "a"})
+        self.j("POST", "/api/tasks", {"title": "b"})
+        self.j("PATCH", f"/api/tasks/{t['id']}", {"done": True})
+        self.assertEqual(self.j("POST", "/api/clear", {})[1], {"removed": 1})
+        self.assertEqual(len(self.j("GET", "/api/tasks")[1]), 1)
+        self.j("POST", "/api/restore", {})
+        self.assertEqual(len(self.j("GET", "/api/tasks")[1]), 2)
+
+    def test_index_has_clear_and_shortcuts(self):
+        _, d = self.call("GET", "/")
+        self.assertIn(b"Clear completed", d)
+        self.assertIn(b"keydown", d)
+
     def test_index_page(self):
         s, d = self.call("GET", "/")
         self.assertEqual(s, 200)

@@ -55,7 +55,7 @@ form{display:flex;flex-direction:column}
 <input class="search" id="q" type="search" placeholder="Search" aria-label="Search">
 <div class="seg" id="seg"><button data-s="pending" class="on">Pending</button><button data-s="done">Done</button><button data-s="all">All</button></div>
 </div></header>
-<main class="wrap"><div id="list"></div></main>
+<main class="wrap"><div id="list"></div><div style="text-align:center;margin:16px"><button class="undo-link" id="clr" style="display:none;border:0;background:none;color:var(--red);font-weight:600;cursor:pointer">Clear completed</button></div></main>
 <button class="fab" id="add" aria-label="New task">+</button>
 <div class="undo" id="undo"><span id="umsg">Deleted</span><button id="ubtn">Undo</button></div>
 <dialog id="dlg"><form id="form" method="dialog">
@@ -88,6 +88,9 @@ $("form").onsubmit=async e=>{e.preventDefault();const b={title:$("title").value,
  try{editing?await api("PATCH","/api/tasks/"+editing.id,b):await api("POST","/api/tasks",b);$("dlg").close();load()}catch(x){$("err").textContent=x.message;$("err").style.display="block"}};
 let ut;$("del").onclick=async()=>{try{await api("DELETE","/api/tasks/"+editing.id);$("dlg").close();$("undo").style.display="flex";clearTimeout(ut);ut=setTimeout(()=>$("undo").style.display="none",6000);load()}catch(x){alert(x.message)}};
 $("ubtn").onclick=async()=>{try{await api("POST","/api/restore",{});$("undo").style.display="none";load()}catch(x){alert(x.message)}};
+$("clr").onclick=async()=>{if(!confirm("Remove all completed tasks?"))return;try{const r=await api("POST","/api/clear",{});$("umsg").textContent="Removed "+r.removed;$("undo").style.display="flex";clearTimeout(ut);ut=setTimeout(()=>$("undo").style.display="none",6000);load()}catch(x){alert(x.message)}};
+const _render=render;render=function(){_render();$("clr").style.display=status==="done"&&tasks.length?"":"none"};
+document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey||$("dlg").open||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(e.key==="n"){e.preventDefault();openDlg()}else if(e.key==="/"){e.preventDefault();$("q").focus()}});
 load();
 </script>
 </body>

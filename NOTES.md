@@ -147,3 +147,6 @@
 
 ## Improvement round 40
 - Added `run.ps1`/`stop.ps1` to start/stop the web GUI in the background (PID file). Interpreted "run.p1" as run.ps1; the request "now" had no content and was ignored. Manually verified start/HTTP 200/stop. Backlog: GUI bulk clear/shortcuts, no browser automation test.
+
+## Improvement round 41
+- Web GUI: "Clear completed" button (Done view, with undo toast) and keyboard shortcuts (`n` new task, `/` search). 121 tests pass. Backlog: no browser-automation test of the front end.
