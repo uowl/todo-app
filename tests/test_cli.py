@@ -455,3 +455,37 @@ class TagMaintenanceTest(ExtrasTest):
         rc, _, err = self.run_cli("rename-tag", "nope", "q")
         self.assertEqual(rc, 1)
         self.assertIn("no tasks have tag", err)
+
+
+class SubtaskTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile, os
+        self.d = tempfile.TemporaryDirectory()
+        self.f = os.path.join(self.d.name, "t.json")
+
+    def tearDown(self):
+        self.d.cleanup()
+
+    def run_cli(self, *argv):
+        import io
+        from todo.cli import main
+        out, err = io.StringIO(), io.StringIO()
+        code = main(["--file", self.f, *argv], out, err)
+        return code, out.getvalue(), err.getvalue()
+
+    def test_subtask_flow(self):
+        self.run_cli("add", "parent")
+        self.assertEqual(self.run_cli("add", "child", "--parent", "1")[0], 0)
+        self.assertIn("subtask of 1", self.run_cli("ls")[1])
+        self.assertIn("- ", self.run_cli("show", "1")[1])
+        self.assertEqual(self.run_cli("add", "x", "--parent", "2")[0], 1)  # one level only
+        self.assertEqual(self.run_cli("add", "x", "--parent", "9")[0], 1)
+
+    def test_rm_cascades_and_restore(self):
+        self.run_cli("add", "parent")
+        self.run_cli("add", "child", "--parent", "1")
+        code, out, _ = self.run_cli("rm", "1", "2")
+        self.assertEqual(code, 0)
+        self.assertIn("No tasks", self.run_cli("ls")[1])
+        self.run_cli("restore")
+        self.assertIn("child", self.run_cli("ls")[1])

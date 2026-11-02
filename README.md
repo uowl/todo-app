@@ -38,6 +38,7 @@ todo list
 | `todo rm ID...` | Delete tasks. |
 | `todo clear` | Delete all completed tasks. |
 | `todo restore` | Undo the last `rm` / `clear` (brings back the whole batch). |
+| `todo add --parent ID TITLE` | Add a subtask (one level). `rm` of a parent also removes its subtasks; `show` lists them. |
 | `todo stats` | Show total, pending, done and overdue counts. |
 | `todo next` | Show the single most urgent pending task. |
 | `todo ls --untagged` | Only tasks with no tags. |

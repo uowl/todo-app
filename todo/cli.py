@@ -41,6 +41,8 @@ def format_task(task: Task, color: bool = False) -> str:
         parts.append(" ".join(f"#{t}" for t in task.tags))
     if task.repeat:
         parts.append(f"(repeats {task.repeat})")
+    if task.parent is not None:
+        parts.append(f"(subtask of {task.parent})")
     if task.note:
         parts.append("[note]")
     return "  ".join(parts)
@@ -59,6 +61,7 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("-t", "--tag", action="append", dest="tags", help="tag (repeatable)")
     a.add_argument("-n", "--note", default="", help="longer free-text note")
     a.add_argument("-r", "--repeat", choices=REPEATS, help="recur when completed")
+    a.add_argument("--parent", type=int, metavar="ID", help="make this a subtask of task ID")
 
     ls = sub.add_parser("list", aliases=["ls"], help="list tasks (pending by default)")
     g = ls.add_mutually_exclusive_group()
@@ -156,7 +159,8 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
     cmd = args.command
 
     if cmd == "add":
-        t = store.add(" ".join(args.title), args.priority, args.due, args.tags, args.note, args.repeat)
+        t = store.add(" ".join(args.title), args.priority, args.due, args.tags, args.note, args.repeat,
+                      args.parent)
         print(f"Added task {t.id}: {t.title}", file=out)
     elif cmd in ("list", "ls", "search"):
         if cmd == "search":
@@ -198,7 +202,11 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             if nxt:
                 print(f"  Next {nxt.repeat} occurrence: task {nxt.id} (due {nxt.due})", file=out)
     elif cmd == "rm":
-        removed = [store.remove(i) for i in _checked_ids(store, args.ids)]
+        removed = []
+        for i in _checked_ids(store, args.ids):
+            if i not in {t.id for t in removed}:  # may already be gone as a subtask
+                removed.extend([store.get(i), *store.subtasks(i)])
+                store.remove(i)
         store.trash = removed  # restore brings back the whole batch
         store.save()
         for t in removed:
@@ -225,6 +233,9 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             print(f"    repeats: {t.repeat}", file=out)
         if t.completed:
             print(f"    completed: {t.completed}", file=out)
+        subs = store.subtasks(t.id)
+        for sub_t in subs:
+            print("    - " + format_task(sub_t).strip(), file=out)
         if t.note:
             print("    note: " + t.note.replace(chr(10), chr(10) + " " * 10), file=out)
     elif cmd == "restore":

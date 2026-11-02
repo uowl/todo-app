@@ -36,6 +36,7 @@ class Task:
     created: str = field(default_factory=_now)
     completed: str | None = None
     note: str = ""
+    parent: int | None = None  # id of the parent task (one level of subtasks)
     repeat: str | None = None  # daily/weekly/monthly: completing spawns the next occurrence
 
     @classmethod
@@ -183,13 +184,16 @@ class TodoStore:
 
     def add(self, title: str, priority: str = "medium", due: str | None = None,
             tags: list[str] | None = None, note: str = "",
-            repeat: str | None = None) -> Task:
+            repeat: str | None = None, parent: int | None = None) -> Task:
         title = title.strip()
         if not title:
             raise TodoError("task title cannot be empty")
+        if parent is not None:
+            if self.get(parent).parent is not None:
+                raise TodoError(f"task {parent} is itself a subtask; only one level is supported")
         task = Task(id=self.next_id, title=title, priority=validate_priority(priority),
                     due=validate_due(due), tags=normalize_tags(tags), note=(note or "").strip(),
-                    repeat=validate_repeat(repeat))
+                    repeat=validate_repeat(repeat), parent=parent)
         self.next_id += 1
         self.tasks.append(task)
         self.save()
@@ -254,10 +258,15 @@ class TodoStore:
         self.save()
         return task
 
+    def subtasks(self, task_id: int) -> list[Task]:
+        return [t for t in self.tasks if t.parent == task_id]
+
     def remove(self, task_id: int) -> Task:
+        """Delete a task and (cascading) its subtasks; all go to the trash."""
         task = self.get(task_id)
-        self.tasks.remove(task)
-        self.trash = [task]
+        gone = [task, *self.subtasks(task_id)]
+        self.tasks = [t for t in self.tasks if t not in gone]
+        self.trash = gone
         self.save()
         return task
 
@@ -279,6 +288,10 @@ class TodoStore:
         if not self.trash:
             raise TodoError("nothing to restore")
         restored, self.trash = self.trash, []
+        live = {t.id for t in self.tasks} | {t.id for t in restored}
+        for t in restored:  # parent permanently gone: promote to top level
+            if t.parent is not None and t.parent not in live:
+                t.parent = None
         self.tasks = sorted(self.tasks + restored, key=lambda t: t.id)
         self.save()
         return restored

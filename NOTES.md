@@ -21,7 +21,7 @@
 - The `OVERDUE` marker uses the local date.
 
 ## Backlog
-- Subtasks.
+- Subtask follow-ups: import/export of `parent`, indented display in `ls`.
 - `todo import`.
 - Multi-level undo history (only the last rm/clear is restorable now).
 
@@ -129,3 +129,6 @@
 
 ## Improvement round 34 (no changes)
 - Reviewed; 79 tests pass. Backlog (subtasks, multi-level undo) unchanged.
+
+## Improvement round 35
+- Added one-level subtasks: `add --parent ID`, shown in `ls` as "(subtask of N)" and under `show`; `rm` cascades to subtasks (restorable). 81 tests pass. Remaining: parent in import/export, indented `ls`, multi-level undo.
