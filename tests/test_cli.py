@@ -399,6 +399,16 @@ class NextLimitTest(ExtrasTest):
         _, out, _ = self.run_cli("ls", "--reverse")
         self.assertLess(out.index("low one"), out.index("big one"))
 
+    def test_ls_json(self):
+        import json
+        _, out, _ = self.run_cli("ls", "--json")
+        self.assertEqual(json.loads(out), [])
+        self.run_cli("add", "a", "-t", "x")
+        self.run_cli("add", "b")
+        _, out, _ = self.run_cli("ls", "--json", "-t", "x")
+        data = json.loads(out)
+        self.assertEqual([d["title"] for d in data], ["a"])
+
     def test_next_and_limit(self):
         self.assertIn("Nothing to do", self.run_cli("next")[1])
         self.run_cli("add", "low one", "-p", "low")

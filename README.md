@@ -43,6 +43,7 @@ todo list
 | `todo ls --untagged` | Only tasks with no tags. |
 | `todo ls --undated` | Only tasks with no due date. |
 | `todo ls --reverse` | Reverse the sort order. |
+| `todo ls --json` | Print matching tasks as JSON (for scripts). |
 | `todo ls --limit N` | Show at most N tasks (prints "showing N of M" if truncated). |
 | `todo tags` | List tags with pending/total counts. |
 

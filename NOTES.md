@@ -81,3 +81,6 @@
 
 ## Improvement round 17
 - Added `ls --reverse`. Backlog: subtasks, multi-level undo.
+
+## Improvement round 18
+- Added `ls --json` for scripting (respects filters/sort/limit). Backlog: subtasks, multi-level undo.

@@ -75,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     ls.add_argument("--sort", choices=SORTS, default="priority", help="sort order")
     ls.add_argument("--reverse", action="store_true", help="reverse the sort order")
     ls.add_argument("--limit", type=int, metavar="N", help="show at most N tasks")
+    ls.add_argument("--json", action="store_true", help="print matching tasks as JSON (for scripts)")
     ls.set_defaults(status="pending")
     sub.add_parser("next", help="show the single most urgent pending task")
 
@@ -173,6 +174,9 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             tasks = tasks[:args.limit]
         else:
             total = len(tasks)
+        if cmd != "search" and args.json:
+            export_tasks(tasks, "json", out)
+            return 0
         if not tasks:
             print("No tasks.", file=out)
         for t in tasks:
