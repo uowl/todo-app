@@ -1,0 +1,125 @@
+import io
+import os
+import subprocess
+import sys
+import tempfile
+import unittest
+from contextlib import redirect_stderr
+from pathlib import Path
+
+from todo.cli import main
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+class CliTestCase(unittest.TestCase):
+    def setUp(self):
+        self._tmp = tempfile.TemporaryDirectory()
+        self.file = str(Path(self._tmp.name) / "todo.json")
+
+    def tearDown(self):
+        self._tmp.cleanup()
+
+    def run_cli(self, *args):
+        out, err = io.StringIO(), io.StringIO()
+        code = main(["--file", self.file, *args], out=out, err=err)
+        return code, out.getvalue(), err.getvalue()
+
+    def test_full_workflow(self):
+        code, out, _ = self.run_cli("add", "Write", "report", "-p", "high", "-d", "2030-01-01",
+                                    "-t", "work")
+        self.assertEqual(code, 0)
+        self.assertIn("Added task 1: Write report", out)
+        self.run_cli("add", "Buy milk", "-t", "home")
+
+        _, out, _ = self.run_cli("list")
+        lines = out.strip().splitlines()
+        self.assertEqual(len(lines), 2)
+        self.assertIn("Write report", lines[0])  # high priority first
+        self.assertIn("!!!", lines[0])
+        self.assertIn("#work", lines[0])
+        self.assertIn("due 2030-01-01", lines[0])
+
+        _, out, _ = self.run_cli("done", "2")
+        self.assertIn("Completed task 2", out)
+        _, out, _ = self.run_cli("list")
+        self.assertNotIn("Buy milk", out)
+        _, out, _ = self.run_cli("list", "--done")
+        self.assertIn("[x]", out)
+        _, out, _ = self.run_cli("ls", "-a")
+        self.assertEqual(len(out.strip().splitlines()), 2)
+
+        _, out, _ = self.run_cli("stats")
+        self.assertIn("2 total, 1 pending, 1 done", out)
+
+        _, out, _ = self.run_cli("undo", "2")
+        self.assertIn("Reopened task 2", out)
+
+        _, out, _ = self.run_cli("edit", "1", "--title", "Write final report", "--no-due",
+                                 "--no-tags")
+        self.assertIn("Write final report", out)
+        self.assertNotIn("due", out)
+        self.assertNotIn("#", out)
+
+        _, out, _ = self.run_cli("search", "MILK")
+        self.assertIn("Buy milk", out)
+        self.assertNotIn("report", out)
+
+        self.run_cli("done", "1", "2")
+        _, out, _ = self.run_cli("clear")
+        self.assertIn("Removed 2 completed task(s).", out)
+        _, out, _ = self.run_cli("list")
+        self.assertIn("No tasks.", out)
+
+    def test_filters(self):
+        self.run_cli("add", "a", "-t", "work", "-p", "low")
+        self.run_cli("add", "b", "-t", "home", "-p", "high")
+        _, out, _ = self.run_cli("list", "-t", "work")
+        self.assertIn(" a", out)
+        self.assertNotIn(" b", out)
+        _, out, _ = self.run_cli("list", "-p", "high")
+        self.assertIn(" b", out)
+        self.assertNotIn(" a", out)
+
+    def test_rm(self):
+        self.run_cli("add", "a")
+        code, out, _ = self.run_cli("rm", "1")
+        self.assertEqual(code, 0)
+        self.assertIn("Removed task 1: a", out)
+
+    def test_bare_command_lists(self):
+        self.run_cli("add", "hello")
+        _, out, _ = self.run_cli()
+        self.assertIn("hello", out)
+
+    def test_errors_return_nonzero(self):
+        code, _, err = self.run_cli("done", "42")
+        self.assertEqual(code, 1)
+        self.assertIn("no task with id 42", err)
+        code, _, err = self.run_cli("add", "x", "-d", "not-a-date")
+        self.assertEqual(code, 1)
+        self.assertIn("invalid due date", err)
+
+    def test_argparse_errors_exit_2(self):
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit) as cm:
+            self.run_cli("add", "x", "-p", "urgent")
+        self.assertEqual(cm.exception.code, 2)
+
+    def test_overdue_marker(self):
+        self.run_cli("add", "old", "-d", "2000-01-01")
+        _, out, _ = self.run_cli("list")
+        self.assertIn("OVERDUE", out)
+        _, out, _ = self.run_cli("stats")
+        self.assertIn("1 overdue", out)
+
+    def test_module_entry_point(self):
+        env = {**os.environ, "TODO_FILE": self.file}
+        subprocess.run([sys.executable, "-m", "todo", "add", "via subprocess"], cwd=ROOT,
+                       env=env, check=True, capture_output=True)
+        res = subprocess.run([sys.executable, "-m", "todo", "list"], cwd=ROOT, env=env,
+                             check=True, capture_output=True, text=True)
+        self.assertIn("via subprocess", res.stdout)
+
+
+if __name__ == "__main__":
+    unittest.main()
