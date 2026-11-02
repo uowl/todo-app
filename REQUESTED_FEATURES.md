@@ -13,3 +13,7 @@ Top priority. Mark each `[x]` when done and tested.
 - [x] (2026-11-01) add run.p1 and stop.ps1 file to manage this service
 
 - [x] (2026-11-01) now (no actionable content; ignored)
+
+- [x] (2026-11-01) app needs to look like a professional todo app
+
+- [x] (2026-11-01) now (no actionable content; ignored)

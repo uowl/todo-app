@@ -88,3 +88,10 @@ class WebTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class IndexPageTest(unittest.TestCase):
+    def test_index_has_professional_ui_elements(self):
+        html = (Path(__file__).parent.parent / "todo" / "index.html").read_text(encoding="utf-8")
+        for needle in ('id="qf"', 'id="pb"', 'id="toast"', "Overdue"):
+            self.assertIn(needle, html)

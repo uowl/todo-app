@@ -150,3 +150,6 @@
 
 ## Improvement round 41
 - Web GUI: "Clear completed" button (Done view, with undo toast) and keyboard shortcuts (`n` new task, `/` search). 121 tests pass. Backlog: no browser-automation test of the front end.
+
+## Improvement round 42
+- Web GUI polish ("professional look"): quick-add bar, progress bar and "N of M completed", tab counts, pending view grouped by Overdue/Today/Upcoming/No date, high-priority chip, hover/focus states, keyboard-operable rows, error toasts instead of alert(), friendlier empty states. 122 tests pass; JS syntax checked with node. Backlog: no browser-automation test of the front end. The second "now" request had no content and was ignored.
