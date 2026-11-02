@@ -49,3 +49,6 @@
 
 ## Improvement round 6
 - Added task notes: `add -n/--note`, `edit -n` (empty clears), new `todo show ID`; search and import/export cover notes. 49 tests pass. Removed from backlog: notes (subtasks and recurring still open).
+
+## Improvement round 7
+- Notes now appear in csv/markdown exports; `ls` shows a `[note]` marker; `edit` no-field error mentions `-n`. 50 tests pass.

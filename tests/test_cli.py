@@ -325,3 +325,17 @@ class NoteTests(unittest.TestCase):
             run("edit", "1", "-n", "")
             self.assertNotIn("note:", run("show", "1")[1])
             self.assertEqual(run("show", "9")[0], 1)
+
+    def test_note_marker_and_exports(self):
+        import tempfile, os, io
+        from todo.cli import main
+        with tempfile.TemporaryDirectory() as d:
+            f = os.path.join(d, "t.json")
+            def run(*a):
+                out = io.StringIO()
+                main(["--file", f, *a], out=out, err=io.StringIO())
+                return out.getvalue()
+            run("add", "A", "-n", "hello\nworld")
+            self.assertIn("[note]", run("ls"))
+            self.assertIn("hello", run("export", "-f", "csv"))
+            self.assertIn("  > world", run("export", "-f", "markdown"))

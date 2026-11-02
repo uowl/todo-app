@@ -39,6 +39,8 @@ def format_task(task: Task, color: bool = False) -> str:
             parts.append(f"(due {task.due})")
     if task.tags:
         parts.append(" ".join(f"#{t}" for t in task.tags))
+    if task.note:
+        parts.append("[note]")
     return "  ".join(parts)
 
 
@@ -109,15 +111,17 @@ def export_tasks(tasks: Sequence[Task], fmt: str, out: TextIO) -> None:
         print(file=out)
     elif fmt == "csv":
         w = csv.writer(out, lineterminator=chr(10))
-        w.writerow(["id", "title", "done", "priority", "due", "tags"])
+        w.writerow(["id", "title", "done", "priority", "due", "tags", "note"])
         for t in tasks:
             w.writerow([t.id, t.title, "yes" if t.done else "no", t.priority, t.due or "",
-                        ",".join(t.tags)])
+                        ",".join(t.tags), t.note])
     else:
         for t in tasks:
             extra = f" (due {t.due})" if t.due else ""
             extra += "".join(f" #{g}" for g in t.tags)
             print(f"- [{'x' if t.done else ' '}] {t.title}{extra}", file=out)
+            for line in t.note.splitlines():
+                print(f"  > {line}", file=out)
 
 
 def _checked_ids(store: TodoStore, ids: Sequence[int]) -> list[int]:
@@ -159,7 +163,7 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
     elif cmd == "edit":
         tags = [] if args.no_tags else args.tags
         if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due, args.note)):
-            raise TodoError("nothing to edit; pass --title, -p, -d/--no-due or -t/--no-tags")
+            raise TodoError("nothing to edit; pass --title, -p, -d/--no-due, -t/--no-tags or -n")
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
                        tags=tags, clear_due=args.no_due, note=args.note)
         print(f"Updated: {format_task(t)}", file=out)
