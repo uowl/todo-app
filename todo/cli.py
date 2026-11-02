@@ -163,11 +163,16 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
         if cmd != "search" and args.limit is not None:
             if args.limit < 1:
                 raise TodoError("--limit must be at least 1")
+            total = len(tasks)
             tasks = tasks[:args.limit]
+        else:
+            total = len(tasks)
         if not tasks:
             print("No tasks.", file=out)
         for t in tasks:
             print(format_task(t, use_color(out)), file=out)
+        if len(tasks) < total:
+            print(f"(showing {len(tasks)} of {total})", file=out)
     elif cmd == "next":
         # Default sort is priority, then due date: the first pending task is the most urgent.
         tasks = store.query(status="pending")[:1]

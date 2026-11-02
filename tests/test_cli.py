@@ -386,7 +386,9 @@ class NextLimitTest(ExtrasTest):
         self.run_cli("add", "mid one")
         self.assertIn("big one", self.run_cli("next")[1])
         _, out, _ = self.run_cli("ls", "--limit", "2")
-        self.assertEqual(len(out.splitlines()), 2)
+        self.assertEqual(len(out.splitlines()), 3)
+        self.assertIn("(showing 2 of 3)", out)
+        self.assertNotIn("showing", self.run_cli("ls", "--limit", "5")[1])
         self.assertEqual(self.run_cli("ls", "--limit", "0")[0], 1)
 
 

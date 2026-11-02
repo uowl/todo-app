@@ -69,3 +69,6 @@
 
 ## Improvement round 13
 - Added `edit --rm-tag` and `todo rename-tag OLD NEW` (merges into existing tag). Backlog: subtasks, multi-level undo.
+
+## Improvement round 14
+- `ls --limit` now prints "(showing N of M)" when truncated. Backlog: subtasks, multi-level undo.
