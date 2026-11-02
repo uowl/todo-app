@@ -107,6 +107,7 @@ def build_parser() -> argparse.ArgumentParser:
     im.add_argument("source", metavar="FILE")
 
     sub.add_parser("stats", help="show task counts")
+    sub.add_parser("tags", help="list tags with pending/total counts")
     return p
 
 
@@ -208,6 +209,17 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
         print(f"Imported {len(store.import_tasks(data))} task(s).", file=out)
     elif cmd == "clear":
         print(f"Removed {store.clear_done()} completed task(s).", file=out)
+    elif cmd == "tags":
+        counts: dict[str, list[int]] = {}
+        for t in store.tasks:
+            for g in t.tags:
+                c = counts.setdefault(g, [0, 0])
+                c[1] += 1
+                c[0] += not t.done
+        if not counts:
+            print("No tags.", file=out)
+        for g in sorted(counts):
+            print(f"#{g}  {counts[g][0]} pending / {counts[g][1]} total", file=out)
     elif cmd == "stats":
         total = len(store.tasks)
         done = sum(t.done for t in store.tasks)

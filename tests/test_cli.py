@@ -366,3 +366,13 @@ class TestRepeatCli(ExtrasTest):
         self.assertNotIn("repeats", out)
         with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             self.run_cli("add", "x", "-r", "yearly")
+
+
+class TagsCommandTest(ExtrasTest):
+    def test_tags_counts(self):
+        self.assertIn("No tags", self.run_cli("tags")[1])
+        self.run_cli("add", "a", "-t", "work", "-t", "home")
+        self.run_cli("add", "b", "-t", "work")
+        self.run_cli("done", "2")
+        _, out, _ = self.run_cli("tags")
+        self.assertEqual(out.splitlines(), ["#home  1 pending / 1 total", "#work  1 pending / 2 total"])

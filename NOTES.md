@@ -24,7 +24,6 @@
 - Subtasks.
 - `todo import`.
 - Multi-level undo history (only the last rm/clear is restorable now).
-- CI workflow (GitHub Actions) running the tests on several Python versions.
 
 ## Test results (testing pass)
 - Ran the suite and exercised the real CLI (`python -m todo`) by hand: add/list/ls/search/done/undo/edit/rm/clear/stats, invalid priority/date, empty titles, corrupt or wrong-shape JSON, unicode, dash-leading titles, `--file` in a new directory.
@@ -58,3 +57,6 @@
 
 ## Improvement round 9
 - Added `ls --due-by DATE` (accepts relative dates; bad date gives a clean error). Backlog still: subtasks, multi-level undo, CI.
+
+## Improvement round 10
+- Added `todo tags` (pending/total per tag) and a GitHub Actions workflow (`.github/workflows/tests.yml`, Python 3.10-3.13). 59 tests pass. Backlog: subtasks, multi-level undo.
