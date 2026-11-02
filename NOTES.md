@@ -21,11 +21,9 @@
 - The `OVERDUE` marker uses the local date.
 
 ## Backlog
-- Coloured output (ANSI), with a `--no-color` option or support for `NO_COLOR`.
 - Subtasks / notes; recurring tasks.
-- `todo export` / `import` (CSV / Markdown).
+- `todo import`.
 - Undo history for the last destructive action (`rm`, `clear`).
-- Sort options (`--sort due|created`).
 - CI workflow (GitHub Actions) running the tests on several Python versions.
 
 ## Test results (testing pass)
@@ -36,3 +34,6 @@
 
 ## Improvement round 1
 - Added relative due dates (today/tomorrow/+Nd/+Nw/weekday), `ls --overdue`, and a clearer corrupt-file error. Tests updated/added; all pass.
+
+## Improvement round 2
+- Added `ls --sort`, ANSI colour (tty only, honours NO_COLOR), `export` (json/csv/markdown). 37 tests pass.

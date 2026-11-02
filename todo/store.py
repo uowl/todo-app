@@ -13,6 +13,7 @@ from pathlib import Path
 PRIORITIES = ("low", "medium", "high")
 DEFAULT_FILE = Path.home() / ".todo.json"
 ENV_VAR = "TODO_FILE"
+SORTS = ("priority", "due", "created")
 
 
 class TodoError(Exception):
@@ -208,8 +209,13 @@ class TodoStore:
 
     def query(self, status: str = "pending", tag: str | None = None,
               priority: str | None = None, text: str | None = None,
-              overdue: bool = False) -> list[Task]:
-        """Filter tasks; sort pending first, then priority (high first), due date, id."""
+              overdue: bool = False, sort: str = "priority") -> list[Task]:
+        """Filter and sort. Default: pending first, priority (high first), due date, id.
+
+        sort="due" orders by due date (undated last); sort="created" by creation order.
+        """
+        if sort not in SORTS:
+            raise TodoError(f"invalid sort {sort!r}; choose from {', '.join(SORTS)}")
         result = self.tasks
         if status == "pending":
             result = [t for t in result if not t.done]
@@ -227,5 +233,9 @@ class TodoStore:
             needle = text.lower()
             result = [t for t in result if needle in t.title.lower()]
         rank = {"high": 0, "medium": 1, "low": 2}
+        if sort == "due":
+            return sorted(result, key=lambda t: (t.done, t.due or "9999-12-31", rank.get(t.priority, 1), t.id))
+        if sort == "created":
+            return sorted(result, key=lambda t: t.id)
         return sorted(result, key=lambda t: (t.done, rank.get(t.priority, 1),
                                              t.due or "9999-12-31", t.id))

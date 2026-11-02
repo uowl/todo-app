@@ -3,20 +3,40 @@
 from __future__ import annotations
 
 import argparse
+import csv
+import json
+import os
 import sys
+from dataclasses import asdict
 from typing import Sequence, TextIO
 
 from . import __version__
-from .store import PRIORITIES, Task, TodoError, TodoStore
+from .store import PRIORITIES, SORTS, Task, TodoError, TodoStore
 
 PRIORITY_MARK = {"high": "!!!", "medium": "!! ", "low": "!  "}
 
 
-def format_task(task: Task) -> str:
+def use_color(out: TextIO) -> bool:
+    """Colour only on a real terminal, and never when NO_COLOR is set."""
+    return not os.environ.get("NO_COLOR") and getattr(out, "isatty", lambda: False)()
+
+
+def _paint(text: str, code: str, color: bool) -> str:
+    return f"[{code}m{text}[0m" if color else text
+
+
+def format_task(task: Task, color: bool = False) -> str:
     box = "[x]" if task.done else "[ ]"
-    parts = [f"{task.id:>3} {box} {PRIORITY_MARK.get(task.priority, '   ')} {task.title}"]
+    mark = PRIORITY_MARK.get(task.priority, "   ")
+    if task.priority == "high" and not task.done:
+        mark = _paint(mark, "31", color)
+    line = f"{task.id:>3} {box} {mark} {task.title}"
+    parts = [_paint(line, "2", color) if task.done else line]
     if task.due:
-        parts.append(f"(due {task.due}{' OVERDUE' if task.is_overdue() else ''})")
+        if task.is_overdue():
+            parts.append(_paint(f"(due {task.due} OVERDUE)", "31;1", color))
+        else:
+            parts.append(f"(due {task.due})")
     if task.tags:
         parts.append(" ".join(f"#{t}" for t in task.tags))
     return "  ".join(parts)
@@ -43,6 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     ls.add_argument("--overdue", action="store_true", help="only overdue tasks")
     ls.add_argument("-t", "--tag", help="filter by tag")
     ls.add_argument("-p", "--priority", choices=PRIORITIES, help="filter by priority")
+    ls.add_argument("--sort", choices=SORTS, default="priority", help="sort order")
     ls.set_defaults(status="pending")
 
     s = sub.add_parser("search", help="search task titles (all tasks)")
@@ -65,8 +86,28 @@ def build_parser() -> argparse.ArgumentParser:
     tags.add_argument("--no-tags", action="store_true", help="remove all tags")
 
     sub.add_parser("clear", help="delete all completed tasks")
+    ex = sub.add_parser("export", help="export all tasks to stdout")
+    ex.add_argument("-f", "--format", choices=("json", "csv", "markdown"), default="json")
+
     sub.add_parser("stats", help="show task counts")
     return p
+
+
+def export_tasks(tasks: Sequence[Task], fmt: str, out: TextIO) -> None:
+    if fmt == "json":
+        json.dump([asdict(t) for t in tasks], out, indent=2)
+        print(file=out)
+    elif fmt == "csv":
+        w = csv.writer(out, lineterminator=chr(10))
+        w.writerow(["id", "title", "done", "priority", "due", "tags"])
+        for t in tasks:
+            w.writerow([t.id, t.title, "yes" if t.done else "no", t.priority, t.due or "",
+                        ",".join(t.tags)])
+    else:
+        for t in tasks:
+            extra = f" (due {t.due})" if t.due else ""
+            extra += "".join(f" #{g}" for g in t.tags)
+            print(f"- [{'x' if t.done else ' '}] {t.title}{extra}", file=out)
 
 
 def _checked_ids(store: TodoStore, ids: Sequence[int]) -> list[int]:
@@ -89,11 +130,11 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             tasks = store.query(status="all", text=" ".join(args.text))
         else:
             tasks = store.query(status=args.status, tag=args.tag, priority=args.priority,
-                               overdue=args.overdue)
+                               overdue=args.overdue, sort=args.sort)
         if not tasks:
             print("No tasks.", file=out)
         for t in tasks:
-            print(format_task(t), file=out)
+            print(format_task(t, use_color(out)), file=out)
     elif cmd in ("done", "undo"):
         verb = "Completed" if cmd == "done" else "Reopened"
         for i in _checked_ids(store, args.ids):
@@ -108,6 +149,8 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
                        tags=tags, clear_due=args.no_due)
         print(f"Updated: {format_task(t)}", file=out)
+    elif cmd == "export":
+        export_tasks(store.query(status="all", sort="created"), args.format, out)
     elif cmd == "clear":
         print(f"Removed {store.clear_done()} completed task(s).", file=out)
     elif cmd == "stats":
