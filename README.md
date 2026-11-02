@@ -93,3 +93,13 @@ python -m unittest discover -s tests -t . -v
 ## Recurring tasks
 
 - `todo add "Water plants" -d tomorrow -r weekly` (`daily`, `weekly`, `monthly`). Completing it with `todo done ID` also creates the next occurrence (due date advanced from the old one; month-ends are clamped). `todo edit ID -r none` stops repeating.
+
+## Web GUI
+
+`todo web [--port 8765] [--host 127.0.0.1] [--open]` serves a local single-page app on the same data file
+(`--file`/`TODO_FILE` honoured). It follows Apple's design language: SF system font, translucent blurred
+header, segmented Pending/Done/All control, rounded inset-grouped list, priority-coloured circle checkboxes,
+sheet-style edit dialog, undo toast after delete, automatic light/dark mode. Supports add, edit, complete,
+delete/undo, search, subtasks, tags, due dates and repeats. It binds to localhost only, rejects foreign
+`Host` headers, and requires JSON content-type on writes. JSON API: `/api/tasks` (GET/POST),
+`/api/tasks/ID` (PATCH/DELETE), `/api/restore`, `/api/clear` (POST).

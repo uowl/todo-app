@@ -120,6 +120,10 @@ def build_parser() -> argparse.ArgumentParser:
     im.add_argument("source", metavar="FILE")
 
     sub.add_parser("stats", help="show task counts")
+    w = sub.add_parser("web", help="serve a local web GUI (Apple-style, light/dark)")
+    w.add_argument("--port", type=int, default=8765)
+    w.add_argument("--host", default="127.0.0.1")
+    w.add_argument("--open", action="store_true", help="open the browser")
     rt = sub.add_parser("rename-tag", help="rename a tag on all tasks (merges if NEW exists)")
     rt.add_argument("old")
     rt.add_argument("new")
@@ -162,6 +166,25 @@ def _checked_ids(store: TodoStore, ids: Sequence[int]) -> list[int]:
 def run(args: argparse.Namespace, out: TextIO) -> int:
     store = TodoStore(args.file)
     cmd = args.command
+
+    if cmd == "web":
+        from .web import make_server
+        try:
+            server = make_server(args.file, args.host, args.port)
+        except OSError as exc:
+            raise TodoError(f"cannot start web server on {args.host}:{args.port}: {exc}") from None
+        url = f"http://{args.host}:{server.server_address[1]}/"
+        print(f"Serving on {url} (Ctrl+C to stop)", file=out, flush=True)
+        if args.open:
+            import webbrowser
+            webbrowser.open(url)
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            server.server_close()
+        return 0
 
     if cmd == "add":
         t = store.add(" ".join(args.title), args.priority, args.due, args.tags, args.note, args.repeat,

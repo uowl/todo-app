@@ -141,3 +141,6 @@
 
 ## Improvement round 38
 - Requested features (subtasks, multi-level undo) verified implemented (rounds 35-37); ticked in REQUESTED_FEATURES.md. 115 tests pass.
+
+## Improvement round 39
+- Added `todo web` (stdlib `http.server` JSON API + `todo/index.html` Apple-style SPA, light/dark). Store is re-read per request so CLI and GUI stay in sync; no auth (localhost only, Host check). 119 tests pass. Backlog: GUI has no bulk clear button/keyboard shortcuts; no browser automation test of the front end (manually only the API was exercised).
