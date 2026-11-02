@@ -90,3 +90,6 @@
 
 ## Improvement round 20 (no changes)
 - Reviewed; 79 tests pass. Backlog: subtasks, multi-level undo.
+
+## Improvement round 21 (no changes)
+- Reviewed; 79 tests pass, tree clean. Remaining backlog (subtasks, multi-level undo) is larger than a focused tweak.
