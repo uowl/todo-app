@@ -21,7 +21,7 @@
 - The `OVERDUE` marker uses the local date.
 
 ## Backlog
-- Subtasks; recurring tasks.
+- Subtasks.
 - `todo import`.
 - Multi-level undo history (only the last rm/clear is restorable now).
 - CI workflow (GitHub Actions) running the tests on several Python versions.
@@ -52,3 +52,6 @@
 
 ## Improvement round 7
 - Notes now appear in csv/markdown exports; `ls` shows a `[note]` marker; `edit` no-field error mentions `-n`. 50 tests pass.
+
+## Improvement round 8
+- Added recurring tasks (`add/edit -r daily|weekly|monthly`); `done` spawns the next occurrence. Next due is computed from the old due date (or today if none), so finishing late still yields a past-due next task. 57 tests pass. Removed from backlog: recurring (subtasks still open).

@@ -11,7 +11,7 @@ from dataclasses import asdict
 from typing import Sequence, TextIO
 
 from . import __version__
-from .store import PRIORITIES, SORTS, Task, TodoError, TodoStore
+from .store import PRIORITIES, REPEATS, SORTS, Task, TodoError, TodoStore
 
 PRIORITY_MARK = {"high": "!!!", "medium": "!! ", "low": "!  "}
 
@@ -39,6 +39,8 @@ def format_task(task: Task, color: bool = False) -> str:
             parts.append(f"(due {task.due})")
     if task.tags:
         parts.append(" ".join(f"#{t}" for t in task.tags))
+    if task.repeat:
+        parts.append(f"(repeats {task.repeat})")
     if task.note:
         parts.append("[note]")
     return "  ".join(parts)
@@ -56,6 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
     a.add_argument("-d", "--due", help="due: YYYY-MM-DD, today, tomorrow, +3d, +2w, weekday")
     a.add_argument("-t", "--tag", action="append", dest="tags", help="tag (repeatable)")
     a.add_argument("-n", "--note", default="", help="longer free-text note")
+    a.add_argument("-r", "--repeat", choices=REPEATS, help="recur when completed")
 
     ls = sub.add_parser("list", aliases=["ls"], help="list tasks (pending by default)")
     g = ls.add_mutually_exclusive_group()
@@ -89,6 +92,7 @@ def build_parser() -> argparse.ArgumentParser:
     tags.add_argument("--no-tags", action="store_true", help="remove all tags")
 
     e.add_argument("-n", "--note", help="set the note (empty string clears it)")
+    e.add_argument("-r", "--repeat", choices=REPEATS + ("none",), help="set recurrence (none clears)")
 
     sh = sub.add_parser("show", help="show one task in full, including its note")
     sh.add_argument("id", type=int)
@@ -111,10 +115,10 @@ def export_tasks(tasks: Sequence[Task], fmt: str, out: TextIO) -> None:
         print(file=out)
     elif fmt == "csv":
         w = csv.writer(out, lineterminator=chr(10))
-        w.writerow(["id", "title", "done", "priority", "due", "tags", "note"])
+        w.writerow(["id", "title", "done", "priority", "due", "tags", "note", "repeat"])
         for t in tasks:
             w.writerow([t.id, t.title, "yes" if t.done else "no", t.priority, t.due or "",
-                        ",".join(t.tags), t.note])
+                        ",".join(t.tags), t.note, t.repeat or ""])
     else:
         for t in tasks:
             extra = f" (due {t.due})" if t.due else ""
@@ -137,7 +141,7 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
     cmd = args.command
 
     if cmd == "add":
-        t = store.add(" ".join(args.title), args.priority, args.due, args.tags, args.note)
+        t = store.add(" ".join(args.title), args.priority, args.due, args.tags, args.note, args.repeat)
         print(f"Added task {t.id}: {t.title}", file=out)
     elif cmd in ("list", "ls", "search"):
         if cmd == "search":
@@ -152,8 +156,13 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
     elif cmd in ("done", "undo"):
         verb = "Completed" if cmd == "done" else "Reopened"
         for i in _checked_ids(store, args.ids):
-            t = store.set_done(i, cmd == "done")
+            if cmd == "done":
+                t, nxt = store.complete(i)
+            else:
+                t, nxt = store.set_done(i, False), None
             print(f"{verb} task {t.id}: {t.title}", file=out)
+            if nxt:
+                print(f"  Next {nxt.repeat} occurrence: task {nxt.id} (due {nxt.due})", file=out)
     elif cmd == "rm":
         removed = [store.remove(i) for i in _checked_ids(store, args.ids)]
         store.trash = removed  # restore brings back the whole batch
@@ -162,15 +171,17 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             print(f"Removed task {t.id}: {t.title}", file=out)
     elif cmd == "edit":
         tags = [] if args.no_tags else args.tags
-        if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due, args.note)):
-            raise TodoError("nothing to edit; pass --title, -p, -d/--no-due, -t/--no-tags or -n")
+        if all(v in (None, False) for v in (args.title, args.priority, args.due, tags, args.no_due, args.note, args.repeat)):
+            raise TodoError("nothing to edit; pass --title, -p, -d/--no-due, -t/--no-tags, -n or -r")
         t = store.edit(args.id, title=args.title, priority=args.priority, due=args.due,
-                       tags=tags, clear_due=args.no_due, note=args.note)
+                       tags=tags, clear_due=args.no_due, note=args.note, repeat=args.repeat)
         print(f"Updated: {format_task(t)}", file=out)
     elif cmd == "show":
         t = store.get(args.id)
         print(format_task(t, use_color(out)), file=out)
         print(f"    created: {t.created}", file=out)
+        if t.repeat:
+            print(f"    repeats: {t.repeat}", file=out)
         if t.completed:
             print(f"    completed: {t.completed}", file=out)
         if t.note:

@@ -177,3 +177,25 @@ class DueParsingTests(unittest.TestCase):
             parse_due("someday", wed)
         with self.assertRaises(ValueError):
             parse_due("monkey", wed)
+
+
+class TestRepeat(StoreTestCase):
+    def test_complete_spawns_next(self):
+        t = self.store.add("water plants", due="2030-01-31", repeat="monthly", tags=["home"])
+        done, nxt = self.store.complete(t.id)
+        self.assertTrue(done.done)
+        self.assertEqual((nxt.due, nxt.repeat, nxt.tags, nxt.id), ("2030-02-28", "monthly", ["home"], 2))
+        self.assertEqual(len(TodoStore(self.path).tasks), 2)
+
+    def test_complete_twice_and_non_repeating(self):
+        t = self.store.add("x", due="2030-01-01", repeat="weekly")
+        self.store.complete(t.id)
+        self.assertIsNone(self.store.complete(t.id)[1])
+        u = self.store.add("y")
+        self.assertIsNone(self.store.complete(u.id)[1])
+
+    def test_invalid_repeat_and_edit(self):
+        with self.assertRaises(TodoError):
+            self.store.add("x", repeat="yearly")
+        t = self.store.add("x", repeat="daily")
+        self.assertIsNone(self.store.edit(t.id, repeat="none").repeat)

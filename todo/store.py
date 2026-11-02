@@ -14,6 +14,7 @@ PRIORITIES = ("low", "medium", "high")
 DEFAULT_FILE = Path.home() / ".todo.json"
 ENV_VAR = "TODO_FILE"
 SORTS = ("priority", "due", "created")
+REPEATS = ("daily", "weekly", "monthly")
 
 
 class TodoError(Exception):
@@ -35,6 +36,7 @@ class Task:
     created: str = field(default_factory=_now)
     completed: str | None = None
     note: str = ""
+    repeat: str | None = None  # daily/weekly/monthly: completing spawns the next occurrence
 
     @classmethod
     def from_dict(cls, data: dict) -> "Task":
@@ -89,6 +91,30 @@ def validate_due(value: str | None) -> str | None:
     except ValueError:
         raise TodoError(f"invalid due date {value!r}; use YYYY-MM-DD, today, tomorrow, "
                         "+3d, +2w or a weekday") from None
+
+
+def validate_repeat(value: str | None) -> str | None:
+    if value is None or value == "" or value == "none":
+        return None
+    value = value.lower()
+    if value not in REPEATS:
+        raise TodoError(f"invalid repeat {value!r}; choose from {', '.join(REPEATS)}")
+    return value
+
+
+def next_due(base: date, repeat: str) -> date:
+    if repeat == "daily":
+        return base + timedelta(days=1)
+    if repeat == "weekly":
+        return base + timedelta(days=7)
+    year, month = divmod(base.month, 12)  # monthly; clamp to month length
+    year, month = base.year + year, month + 1
+    day = base.day
+    while True:
+        try:
+            return date(year, month, day)
+        except ValueError:
+            day -= 1
 
 
 def normalize_tags(tags: list[str] | None) -> list[str]:
@@ -156,12 +182,14 @@ class TodoStore:
         raise TodoError(f"no task with id {task_id}")
 
     def add(self, title: str, priority: str = "medium", due: str | None = None,
-            tags: list[str] | None = None, note: str = "") -> Task:
+            tags: list[str] | None = None, note: str = "",
+            repeat: str | None = None) -> Task:
         title = title.strip()
         if not title:
             raise TodoError("task title cannot be empty")
         task = Task(id=self.next_id, title=title, priority=validate_priority(priority),
-                    due=validate_due(due), tags=normalize_tags(tags), note=(note or "").strip())
+                    due=validate_due(due), tags=normalize_tags(tags), note=(note or "").strip(),
+                    repeat=validate_repeat(repeat))
         self.next_id += 1
         self.tasks.append(task)
         self.save()
@@ -176,9 +204,31 @@ class TodoStore:
         self.save()
         return task
 
+    def complete(self, task_id: int) -> tuple[Task, Task | None]:
+        """Mark done; a repeating task also spawns its next occurrence (returned second)."""
+        task = self.get(task_id)
+        if task.done:
+            return task, None
+        task.done = True
+        task.completed = _now()
+        spawned = None
+        if task.repeat:
+            try:
+                base = date.fromisoformat(task.due) if task.due else date.today()
+            except ValueError:
+                base = date.today()
+            spawned = Task(id=self.next_id, title=task.title, priority=task.priority,
+                           due=next_due(base, task.repeat).isoformat(),
+                           tags=list(task.tags), note=task.note, repeat=task.repeat)
+            self.next_id += 1
+            self.tasks.append(spawned)
+        self.save()
+        return task, spawned
+
     def edit(self, task_id: int, title: str | None = None, priority: str | None = None,
              due: str | None = None, tags: list[str] | None = None,
-             clear_due: bool = False, note: str | None = None) -> Task:
+             clear_due: bool = False, note: str | None = None,
+             repeat: str | None = None) -> Task:
         task = self.get(task_id)
         # Validate everything before mutating so a bad field leaves the task untouched.
         new_title = title.strip() if title is not None else None
@@ -186,6 +236,7 @@ class TodoStore:
             raise TodoError("task title cannot be empty")
         new_priority = validate_priority(priority) if priority is not None else None
         new_due = validate_due(due) if due is not None else None
+        new_repeat = validate_repeat(repeat) if repeat is not None else None
         if new_title is not None:
             task.title = new_title
         if new_priority is not None:
@@ -198,6 +249,8 @@ class TodoStore:
             task.tags = normalize_tags(tags)
         if note is not None:
             task.note = note.strip()
+        if repeat is not None:
+            task.repeat = new_repeat
         self.save()
         return task
 
@@ -234,7 +287,8 @@ class TodoStore:
                         due=validate_due(item.get("due")), tags=normalize_tags(item.get("tags")),
                         created=created if isinstance(created, str) else _now(),
                         completed=(item.get("completed") or _now()) if done else None,
-                        note=str(item.get("note") or "").strip())
+                        note=str(item.get("note") or "").strip(),
+                        repeat=validate_repeat(item.get("repeat")))
             next_id += 1
             new.append(task)
         if new:

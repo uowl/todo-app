@@ -80,3 +80,7 @@ python -m unittest discover -s tests -t . -v
 - Output is coloured (overdue/high priority red, done dimmed) only when writing to a terminal; set `NO_COLOR=1` to disable.
 - `todo export [-f json|csv|markdown]` prints all tasks to stdout (redirect to a file). CSV and Markdown exports include notes. `ls` marks tasks that have a note with `[note]`.
 - `todo import FILE` (or `-` for stdin) adds tasks from a JSON export or data file under fresh IDs; invalid input imports nothing.
+
+## Recurring tasks
+
+- `todo add "Water plants" -d tomorrow -r weekly` (`daily`, `weekly`, `monthly`). Completing it with `todo done ID` also creates the next occurrence (due date advanced from the old one; month-ends are clamped). `todo edit ID -r none` stops repeating.

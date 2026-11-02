@@ -339,3 +339,18 @@ class NoteTests(unittest.TestCase):
             self.assertIn("[note]", run("ls"))
             self.assertIn("hello", run("export", "-f", "csv"))
             self.assertIn("  > world", run("export", "-f", "markdown"))
+
+
+class TestRepeatCli(ExtrasTest):
+    def test_repeat_flow(self):
+        self.run_cli("add", "water", "-d", "2030-01-01", "-r", "weekly")
+        code, out, _ = self.run_cli("done", "1")
+        self.assertEqual(code, 0)
+        self.assertIn("Next weekly occurrence: task 2 (due 2030-01-08)", out)
+        _, out, _ = self.run_cli("ls")
+        self.assertIn("(repeats weekly)", out)
+        self.run_cli("edit", "2", "-r", "none")
+        _, out, _ = self.run_cli("show", "2")
+        self.assertNotIn("repeats", out)
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            self.run_cli("add", "x", "-r", "yearly")
