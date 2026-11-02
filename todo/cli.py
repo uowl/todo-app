@@ -68,6 +68,14 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _checked_ids(store: TodoStore, ids: Sequence[int]) -> list[int]:
+    """Dedupe IDs and verify they all exist, so multi-ID commands are all-or-nothing."""
+    unique = list(dict.fromkeys(ids))
+    for i in unique:
+        store.get(i)
+    return unique
+
+
 def run(args: argparse.Namespace, out: TextIO) -> int:
     store = TodoStore(args.file)
     cmd = args.command
@@ -86,11 +94,11 @@ def run(args: argparse.Namespace, out: TextIO) -> int:
             print(format_task(t), file=out)
     elif cmd in ("done", "undo"):
         verb = "Completed" if cmd == "done" else "Reopened"
-        for i in args.ids:
+        for i in _checked_ids(store, args.ids):
             t = store.set_done(i, cmd == "done")
             print(f"{verb} task {t.id}: {t.title}", file=out)
     elif cmd == "rm":
-        for i in args.ids:
+        for i in _checked_ids(store, args.ids):
             t = store.remove(i)
             print(f"Removed task {t.id}: {t.title}", file=out)
     elif cmd == "edit":

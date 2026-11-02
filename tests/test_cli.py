@@ -87,6 +87,43 @@ class CliTestCase(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertIn("Removed task 1: a", out)
 
+    def test_multi_id_is_all_or_nothing(self):
+        self.run_cli("add", "a")
+        self.run_cli("add", "b")
+        code, out, err = self.run_cli("done", "1", "99")
+        self.assertEqual(code, 1)
+        self.assertIn("no task with id 99", err)
+        self.assertNotIn("[x]", self.run_cli("list", "-a")[1])
+        code, _, _ = self.run_cli("rm", "2", "99")
+        self.assertEqual(code, 1)
+        self.assertEqual(len(self.run_cli("list")[1].splitlines()), 2)
+
+    def test_duplicate_ids_ok(self):
+        self.run_cli("add", "a")
+        code, out, _ = self.run_cli("rm", "1", "1")
+        self.assertEqual(code, 0)
+        self.assertEqual(out.count("Removed"), 1)
+
+    def test_empty_title_and_bad_date(self):
+        self.assertEqual(self.run_cli("add", " ")[0], 1)
+        self.assertEqual(self.run_cli("add", "x", "-d", "2026-13-45")[0], 1)
+        self.assertIn("No tasks", self.run_cli("list")[1])
+
+    def test_corrupt_file(self):
+        Path(self.file).write_text("garbage", encoding="utf-8")
+        code, _, err = self.run_cli("list")
+        self.assertEqual(code, 1)
+        self.assertIn("could not read", err)
+
+    def test_unicode_and_dash_title(self):
+        self.run_cli("add", "--", "-ünï ✓")
+        self.assertIn("-ünï ✓", self.run_cli("list")[1])
+
+    def test_ids_not_reused(self):
+        self.run_cli("add", "a")
+        self.run_cli("rm", "1")
+        self.assertIn("Added task 2", self.run_cli("add", "b")[1])
+
     def test_bare_command_lists(self):
         self.run_cli("add", "hello")
         _, out, _ = self.run_cli()

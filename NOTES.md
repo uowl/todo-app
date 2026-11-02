@@ -17,12 +17,10 @@
 - **Unit tests use `unittest`** instead of pytest, because pytest isn't installed and the goal was zero dependencies. pytest can still run these tests.
 
 ## Known issues
-- Commands that take several IDs (`done 1 99`, `rm 1 99`) handle them one at a time. Valid IDs before the bad one have already been changed and saved when the error appears.
 - There is no file locking, so two `todo` processes running at the same moment could lose an update. That's unlikely for one person using a CLI.
 - The `OVERDUE` marker uses the local date.
 
 ## Backlog
-- Validate all IDs before applying a multi-ID command, so it changes all or nothing.
 - Natural-language due dates ("tomorrow", "fri").
 - Coloured output (ANSI), with a `--no-color` option or support for `NO_COLOR`.
 - Subtasks / notes; recurring tasks.
@@ -30,3 +28,9 @@
 - Undo history for the last destructive action (`rm`, `clear`).
 - Sort options (`--sort due|created`).
 - CI workflow (GitHub Actions) running the tests on several Python versions.
+
+## Test results (testing pass)
+- Ran the suite and exercised the real CLI (`python -m todo`) by hand: add/list/ls/search/done/undo/edit/rm/clear/stats, invalid priority/date, empty titles, corrupt or wrong-shape JSON, unicode, dash-leading titles, `--file` in a new directory.
+- **Bug fixed:** multi-ID `done`/`undo`/`rm` applied partially when a later ID was missing or duplicated. IDs are now de-duplicated and validated first (all-or-nothing).
+- Added 6 CLI tests for this and other edge cases. All tests pass.
+- Minor: error text for wrongly-shaped JSON files is technical (e.g. "'list' object has no attribute 'get'") but the exit code is 1 and nothing crashes.
